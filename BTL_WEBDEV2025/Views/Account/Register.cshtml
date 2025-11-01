@@ -69,7 +69,7 @@
             <div class="agreement-field">
                 <input asp-for="AcceptPolicy" class="agreement-checkbox" id="agree" />
                 <label class="agreement-label" for="agree">
-                    I agree to ABDD's <a href="#" class="policy-link">Privacy Policy</a> and <a href="#" class="policy-link">Term of Use</a>
+                    I agree to ABDD's <a asp-controller="Home" asp-action="Privacy" class="policy-link">Privacy Policy</a> and <a href="#" class="policy-link">Term of Use</a>
                 </label>
                 <span asp-validation-for="AcceptPolicy" class="error-text"></span>
             </div>

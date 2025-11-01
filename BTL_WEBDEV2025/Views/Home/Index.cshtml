@@ -14,32 +14,3 @@
 <!-- Shop by Icon Section -->
 @await Html.PartialAsync("~/Views/Home/Partials/_ShopByDetailSection.cshtml")
 
-@section Scripts {
-    <script>
-        // AJAX search functionality
-        $(document).ready(function() {
-            $('.search-container input').on('keyup', function() {
-                var searchTerm = $(this).val();
-                // You can implement AJAX search here
-                console.log('Searching for:', searchTerm);
-            });
-            
-            // Add to cart functionality
-            $('.cart-icon').on('click', function(e) {
-                e.preventDefault();
-                alert('Cart clicked! Implement cart logic here.');
-            });
-            
-            // Smooth scroll to sections
-            $('a[href^="#"]').on('click', function(e) {
-                e.preventDefault();
-                var target = $(this.getAttribute('href'));
-                if (target.length) {
-                    $('html, body').stop().animate({
-                        scrollTop: target.offset().top - 80
-                    }, 1000);
-                }
-            });
-        });
-    </script>
-}

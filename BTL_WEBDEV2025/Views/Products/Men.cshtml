@@ -14,35 +14,14 @@
                 <a class="btn btn-outline-secondary btn-sm rounded-pill me-2 mb-2" href="#brand-@b.Replace(" ", "-")">@b</a>
             }}
         </div>
-        <form class="row row-cols-2 row-cols-md-auto g-2 align-items-end filter-bar shadow-sm p-2 rounded bg-white flex-nowrap my-2" autocomplete="off" onsubmit="return false;">
-            <div class="col-auto">
-                <label class="form-label small text-muted">Min price</label>
-                <input type="number" min="0" step="1" class="form-control border-0 bg-light" id="minPrice" style="width:100px;">
-            </div>
-            <div class="col-auto">
-                <label class="form-label small text-muted">Max price</label>
-                <input type="number" min="0" step="1" class="form-control border-0 bg-light" id="maxPrice" style="width:100px;">
-            </div>
-            <div class="col-auto">
-                <label class="form-label small text-muted">Brand</label>
-                <select class="form-select border-0 bg-light" id="brandSelect">
-                    <option value="">All</option>
-                    @if(brands != null){
-                    @foreach(var b in brands){<option value="@b">@b</option>}}
-                </select>
-            </div>
-            <div class="col-auto">
-                <label class="form-label small text-muted">Sort</label>
-                <select class="form-select border-0 bg-light" id="sortPrice">
-                    <option value="asc">Price ↑</option>
-                    <option value="desc">Price ↓</option>
-                </select>
-            </div>
-            <div class="col-auto d-flex gap-1">
-                <button type="button" class="btn btn-primary btn-sm px-3" id="applyFilters"><i class="bi bi-funnel"></i> Filter</button>
-                <button type="button" class="btn btn-secondary btn-sm px-2" id="resetFilters" title="Clear filters"><i class="bi bi-x-lg"></i></button>
-            </div>
-        </form>
+        @await Component.InvokeAsync("ProductFilter", new { 
+            minPriceId = "minPrice", 
+            maxPriceId = "maxPrice", 
+            brandSelectId = "brandSelect", 
+            sortSelectId = "sortPrice", 
+            applyButtonId = "applyFilters", 
+            resetButtonId = "resetFilters" 
+        })
     </div>
 
     <!-- All products tổng hợp -->

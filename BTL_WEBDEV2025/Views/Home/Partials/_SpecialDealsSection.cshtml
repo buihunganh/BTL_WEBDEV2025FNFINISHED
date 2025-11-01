@@ -3,65 +3,33 @@
     <div class="container-fluid px-4">
         <h2 class="section-title text-center fw-bold mb-5">Special deals</h2>
         <div class="row g-4">
-            <!-- Deal Card 1 -->
+@{
+    var deals = ViewBag.Deals as IEnumerable<BTL_WEBDEV2025.Models.Product> ?? new List<BTL_WEBDEV2025.Models.Product>();
+    var j = 0;
+}
+@foreach (var p in (ViewBag.Deals as IEnumerable<BTL_WEBDEV2025.Models.Product> ?? new List<BTL_WEBDEV2025.Models.Product>()))
+{
+    if (j++ >= 4) { break; }
             <div class="col-md-6 col-lg-3">
                 <div class="deal-card h-100 bg-white border-0 overflow-hidden hover-lift">
-                    <div class="deal-image bg-light d-flex align-items-center justify-content-center"
-                         style="height: 200px;">
-                        <img src="/media/images/home/nike2.jpg" alt="Deal 1" loading="lazy" decoding="async" />
+                    <div class="deal-image bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <img src="@p.ImageUrl" alt="@p.Name" loading="lazy" decoding="async" />
                     </div>
                     <div class="p-3">
-                        <h6 class="fw-bold mb-1">Nike Air Zoom</h6>
-                        <p class="text-muted small mb-1">Lightweight Zoom-cushioned running shoe for daily miles.</p>
-                        <p class="text-danger fw-bold mb-0">Save up to 50%</p>
+                        <h6 class="fw-bold mb-1">@p.Name</h6>
+                        <p class="text-muted small mb-1">@p.Description</p>
+                        <div class="d-flex align-items-center gap-2">
+                            @if (p.DiscountPrice.HasValue) {
+                                <span class="text-danger fw-bold">@String.Format(System.Globalization.CultureInfo.GetCultureInfo("en-US"), "{0:C}", p.DiscountPrice.Value)</span>
+                                <span class="text-muted text-decoration-line-through small">@String.Format(System.Globalization.CultureInfo.GetCultureInfo("en-US"), "{0:C}", p.Price)</span>
+                            } else {
+                                <span class="fw-bold">@String.Format(System.Globalization.CultureInfo.GetCultureInfo("en-US"), "{0:C}", p.Price)</span>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Deal Card 2 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="deal-card h-100 bg-white border-0 overflow-hidden hover-lift">
-                    <div class="deal-image bg-light d-flex align-items-center justify-content-center"
-                         style="height: 200px;">
-                        <img src="/media/images/home/nike3.jpg" alt="Deal 2" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="p-3">
-                        <h6 class="fw-bold mb-1">Training Essentials</h6>
-                        <p class="text-muted small mb-1">Stable trainer with solid grip, built for the gym.</p>
-                        <p class="text-danger fw-bold mb-0">Buy 1 Get 1</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Deal Card 3 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="deal-card h-100 bg-white border-0 overflow-hidden hover-lift">
-                    <div class="deal-image bg-light d-flex align-items-center justify-content-center"
-                         style="height: 200px;">
-                        <img src="/media/images/home/nike4.jpg" alt="Deal 3" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="p-3">
-                        <h6 class="fw-bold mb-1">Lifestyle Picks</h6>
-                        <p class="text-muted small mb-1">Everyday style, easy to wear and built to last.</p>
-                        <p class="text-danger fw-bold mb-0">30% Off</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Deal Card 4 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="deal-card h-100 bg-white border-0 overflow-hidden hover-lift">
-                    <div class="deal-image bg-light d-flex align-items-center justify-content-center"
-                         style="height: 200px;">
-                        <img src="/media/images/home/nike5.jpg" alt="Deal 4" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="p-3">
-                        <h6 class="fw-bold mb-1">Court Classics</h6>
-                        <p class="text-muted small mb-1">Timeless court silhouettes with premium materials.</p>
-                        <p class="text-danger fw-bold mb-0">Weekend Offer</p>
-                    </div>
-                </div>
-            </div>
+}
         </div>
     </div>
 </section>

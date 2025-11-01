@@ -25,23 +25,6 @@ namespace BTL_WEBDEV2025.Controllers
             return View(all);
         }
 
-        // GET: Products/Details/5
-        public IActionResult Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var product = TryGetProductsFromDb().FirstOrDefault(p => p.Id == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            return View(product);
-        }
-
         // GET: Products/Men
         public IActionResult Men()
         {
@@ -148,27 +131,53 @@ namespace BTL_WEBDEV2025.Controllers
             return View(products);
         }
 
-        // GET: Products/Sale
-        public IActionResult Sale()
+        // GET: Products/Search?q=query
+        public IActionResult Search(string q)
         {
-            var saleProducts = TryGetProductsFromDb().Where(p => p.DiscountPrice.HasValue).ToList();
-            return View(saleProducts);
-        }
+            if (string.IsNullOrWhiteSpace(q))
+            {
+                return View(new List<Product>());
+            }
 
-        // AJAX endpoint for filtering
-        [HttpGet]
-        public IActionResult Filter(string category)
-        {
+            List<Product> results;
+            List<string> brands;
+
+            try
+            {
+                if (_db.Database.CanConnect())
+                {
+                    brands = _db.Brands.Select(b => b.Name).ToList();
+                    var query = q.Trim().ToLower();
+                    results = _db.Products
+                        .Include(p => p.Brand)
+                        .Where(p => p.Name.ToLower().Contains(query) || 
+                                   (p.Description != null && p.Description.ToLower().Contains(query)) ||
+                                   (p.Brand != null && p.Brand.Name.ToLower().Contains(query)))
+                        .ToList();
+                    ViewBag.Brands = brands;
+                    ViewBag.SearchQuery = q;
+                    return View(results);
+                }
+            }
+            catch
+            {
+                // ignore and fallback
+            }
+
+            // Fallback to in-memory search
             var all = TryGetProductsFromDb();
-            var filteredProducts = string.IsNullOrEmpty(category) 
-                ? all 
-                : all.Where(p => p.Category == category).ToList();
+            var queryLower = q.Trim().ToLower();
+            results = all.Where(p => 
+                p.Name.ToLower().Contains(queryLower) ||
+                (p.Description != null && p.Description.ToLower().Contains(queryLower)) ||
+                (p.Brand != null && p.Brand.Name.ToLower().Contains(queryLower))
+            ).ToList();
             
-            return Json(filteredProducts);
+            brands = all.Select(p => p.Brand?.Name ?? "Others").Distinct().ToList();
+            ViewBag.Brands = brands;
+            ViewBag.SearchQuery = q;
+            return View(results);
         }
-
-        private List<string> GetAllBrandsForFilter() =>
-            _db.Brands.Select(b => b.Name).ToList();
 
         private List<Product> InitializeProducts()
         {

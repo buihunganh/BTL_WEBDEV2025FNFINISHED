@@ -1,0 +1,44 @@
+@{
+    ViewData["Title"] = "Settings";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "settings";
+}
+
+<div class="container-fluid px-4 my-4">
+    <h1 class="fw-bold mb-4">Settings</h1>
+
+    <div class="row">
+        <div class="col-12 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body">
+                    <h5 class="mb-3 fw-bold">Change Admin Password</h5>
+                    @if (TempData["ChangePwdSuccess"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["ChangePwdSuccess"]</div>
+                    }
+                    @if (TempData["ChangePwdError"] != null)
+                    {
+                        <div class="alert alert-danger">@TempData["ChangePwdError"]</div>
+                    }
+                    <form asp-controller="Admin" asp-action="ChangeAdminPassword" method="post" class="row g-3">
+                        @Html.AntiForgeryToken()
+                        <div class="col-12">
+                            <label class="form-label">New password</label>
+                            <input type="password" name="newPassword" class="form-control" minlength="6" maxlength="50" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Confirm new password</label>
+                            <input type="password" name="confirmPassword" class="form-control" minlength="6" maxlength="50" required />
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-dark">Update</button>
+                        </div>
+                    </form>
+                    <div class="form-text mt-2">Sign in as Admin (RoleId = 1) to update.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+

@@ -87,6 +87,10 @@ namespace BTL_WEBDEV2025.Controllers
                 {
                     HttpContext.Session.SetInt32("UserId", user.Id);
                     HttpContext.Session.SetString("UserEmail", user.Email);
+                    if (!string.IsNullOrWhiteSpace(user.FullName))
+                    {
+                        HttpContext.Session.SetString("UserName", user.FullName);
+                    }
                     // redirect by role: 1 = Admin, others = normal user
                     if (user.RoleId == 1)
                     {
@@ -289,6 +293,10 @@ namespace BTL_WEBDEV2025.Controllers
 
             HttpContext.Session.SetInt32("UserId", user.Id);
             HttpContext.Session.SetString("UserEmail", user.Email);
+            if (!string.IsNullOrWhiteSpace(user.FullName))
+            {
+                HttpContext.Session.SetString("UserName", user.FullName);
+            }
 
             TempData["AuthMessage"] = "Account created.";
             return RedirectToAction("Index", "Home");

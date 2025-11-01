@@ -143,7 +143,7 @@
                 <div class="agreement-field">
                     <input asp-for="AcceptPolicy" type="checkbox" class="agreement-checkbox" id="AcceptPolicy" />
                     <label for="AcceptPolicy" class="agreement-label">
-                        I agree to ABDD's <a href="#" class="policy-link">Privacy Policy</a> and <a href="#" class="policy-link">Term of Use</a>*
+                        I agree to ABDD's <a asp-controller="Home" asp-action="Privacy" class="policy-link">Privacy Policy</a> and <a href="#" class="policy-link">Term of Use</a>*
                     </label>
                 </div>
                 <span asp-validation-for="AcceptPolicy" class="error-text"></span>
@@ -152,7 +152,7 @@
             @if (!(Model?.IsNewUser ?? false) && !(Model?.ShowPassword ?? false))
             {
                 <p class="auth-subtitle" style="margin-bottom: 32px; text-align: left;">
-                    By continuing, I agree to our shop's <a href="#" class="policy-link"><strong>Privacy Policy</strong></a> and <a href="#" class="policy-link"><strong>Terms of Use</strong></a>.
+                    By continuing, I agree to our shop's <a asp-controller="Home" asp-action="Privacy" class="policy-link"><strong>Privacy Policy</strong></a> and <a href="#" class="policy-link"><strong>Terms of Use</strong></a>.
                 </p>
             }
 
@@ -371,15 +371,11 @@
             // Immediately execute when script loads
             (function() {
                 var message = '@Html.Raw(jsMessage)';
-                console.log('🔔 TempData message received:', message);
-                console.log('🔔 showSuccessPopup function exists:', typeof showSuccessPopup);
                 
                 function showPopup() {
                     if (typeof showSuccessPopup === 'function') {
-                        console.log('🔔 Calling showSuccessPopup with message:', message);
                         showSuccessPopup(message);
                     } else {
-                        console.error('❌ showSuccessPopup function not found');
                         // Fallback: try again after a delay
                         setTimeout(function() {
                             if (typeof showSuccessPopup === 'function') {

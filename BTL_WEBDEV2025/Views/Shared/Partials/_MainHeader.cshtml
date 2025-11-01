@@ -1,7 +1,3 @@
-@{
-    var isAuth = (Context != null && Context.Session.GetInt32("UserId") != null) ? "true" : "false";
-}
-
 <!-- Main Header Navigation - Nike style -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
     <div class="container-fluid">
@@ -12,21 +8,34 @@
         
         <!-- Logo - Left side -->
         <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index" style="color: #000; font-size: 1.6rem; font-weight: 700; letter-spacing: 0; text-decoration: none;">
-            NIKE
+            ABDDT
         </a>
         
         <!-- Right side: Search, Wishlist, Cart -->
         <div class="d-none d-lg-flex align-items-center" style="gap: 1rem;">
             <div class="position-relative">
-                <input type="text" placeholder="Search" style="width: 150px; border: none; border-bottom: 1px solid #ccc; border-radius: 0; font-size: 0.875rem; color: #000; background: transparent; padding: 5px 25px 5px 0; outline: none;" onfocus="this.style.borderBottomColor='#000'" onblur="this.style.borderBottomColor='#ccc'" />
-                <i class="bi bi-search position-absolute" style="right: 5px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #8C8C8C;"></i>
+                <form asp-controller="Products" asp-action="Search" method="get" style="display: inline-block;" id="searchForm">
+                    <input type="text" name="q" id="searchInput" placeholder="Search" value="" style="width: 150px; border: none; border-bottom: 1px solid #ccc; border-radius: 0; font-size: 0.875rem; color: #000; background: transparent; padding: 5px 25px 5px 0; outline: none;" onfocus="this.style.borderBottomColor='#000'" onblur="this.style.borderBottomColor='#ccc'" />
+                    <i class="bi bi-search position-absolute" style="right: 5px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #8C8C8C;"></i>
+                </form>
             </div>
             <a href="#" class="text-decoration-none nav-icon" style="color: #000; font-size: 1.3rem;">
                 <i class="bi bi-heart"></i>
             </a>
             <a asp-controller="Cart" asp-action="Index" class="text-decoration-none position-relative nav-icon" style="color: #000; font-size: 1.3rem;">
                 <i class="bi bi-bag"></i>
-                <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 2px 5px;">0</span>
+                @await Component.InvokeAsync("CartBadge")
+            </a>
+        </div>
+        
+        <!-- Mobile: Cart and Wishlist only -->
+        <div class="d-lg-none d-flex align-items-center gap-2">
+            <a href="#" class="text-decoration-none nav-icon" style="color: #000; font-size: 1.2rem;">
+                <i class="bi bi-heart"></i>
+            </a>
+            <a asp-controller="Cart" asp-action="Index" class="text-decoration-none position-relative nav-icon" style="color: #000; font-size: 1.2rem;">
+                <i class="bi bi-bag"></i>
+                @await Component.InvokeAsync("CartBadge")
             </a>
         </div>
         
@@ -71,19 +80,19 @@
                                 <div class="mega-col">
                                     <div class="mega-title">Top Brands</div>
                                     <ul class="mega-list">
-                                        <li><a asp-controller="Products" asp-action="Women" asp-fragment="brand-Nike">Nike</a></li>
-                                        <li><a asp-controller="Products" asp-action="Women" asp-fragment="brand-Adidas">Adidas</a></li>
-                                        <li><a asp-controller="Products" asp-action="Women" asp-fragment="brand-Balenciaga">Balenciaga</a></li>
-                                        <li><a asp-controller="Products" asp-action="Women" asp-fragment="brand-Louboutin">Louboutin</a></li>
+                                        <li><a href="#">Nike</a></li>
+                                        <li><a href="#">Adidas</a></li>
+                                        <li><a href="#">Balenciaga</a></li>
+                                        <li><a href="#">Louboutin</a></li>
                                     </ul>
                                 </div>
                                 <div class="mega-col">
                                     <div class="mega-title">More Brands</div>
                                     <ul class="mega-list">
-                                        <li><a asp-controller="Products" asp-action="Women" asp-fragment="brand-Puma">Puma</a></li>
-                                        <li><a asp-controller="Products" asp-action="Women" asp-fragment="brand-New-Balance">New Balance</a></li>
-                                        <li><a asp-controller="Products" asp-action="Women" asp-fragment="brand-ASICS">ASICS</a></li>
-                                        <li><a asp-controller="Products" asp-action="Women" asp-fragment="brand-Reebok">Reebok</a></li>
+                                        <li><a href="#">Puma</a></li>
+                                        <li><a href="#">New Balance</a></li>
+                                        <li><a href="#">ASICS</a></li>
+                                        <li><a href="#">Reebok</a></li>
                                     </ul>
                                 </div>
                             </div>
@@ -98,43 +107,29 @@
                                 <div class="mega-col">
                                     <div class="mega-title">Top Brands</div>
                                     <ul class="mega-list">
-                                        <li><a asp-controller="Products" asp-action="Kid" asp-fragment="brand-Nike">Nike</a></li>
-                                        <li><a asp-controller="Products" asp-action="Kid" asp-fragment="brand-Adidas">Adidas</a></li>
-                                        <li><a asp-controller="Products" asp-action="Kid" asp-fragment="brand-Balenciaga">Balenciaga</a></li>
-                                        <li><a asp-controller="Products" asp-action="Kid" asp-fragment="brand-Louboutin">Louboutin</a></li>
+                                        <li><a href="#">Nike</a></li>
+                                        <li><a href="#">Adidas</a></li>
+                                        <li><a href="#">Balenciaga</a></li>
+                                        <li><a href="#">Louboutin</a></li>
                                     </ul>
                                 </div>
                                 <div class="mega-col">
                                     <div class="mega-title">More Brands</div>
                                     <ul class="mega-list">
-                                        <li><a asp-controller="Products" asp-action="Kid" asp-fragment="brand-Puma">Puma</a></li>
-                                        <li><a asp-controller="Products" asp-action="Kid" asp-fragment="brand-New-Balance">New Balance</a></li>
-                                        <li><a asp-controller="Products" asp-action="Kid" asp-fragment="brand-ASICS">ASICS</a></li>
-                                        <li><a asp-controller="Products" asp-action="Kid" asp-fragment="brand-Reebok">Reebok</a></li>
+                                        <li><a href="#">Puma</a></li>
+                                        <li><a href="#">New Balance</a></li>
+                                        <li><a href="#">ASICS</a></li>
+                                        <li><a href="#">Reebok</a></li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="Products" asp-action="Sale" style="font-weight: 400; font-size: 0.95rem; color: #000;">Sale</a>
-                </li>
             </ul>
         </div>
     </div>
 </nav>
-
-<!-- Promotion Bar -->
-<div class="promotion-bar bg-white border-bottom" style="border-color: #E5E5E5;">
-    <div class="container-fluid">
-        <div class="d-flex justify-content-center align-items-center flex-wrap gap-3" style="min-height: 32px;">
-            <span style="font-size: 0.875rem; color: #111;">Free Standard Delivery & 30-Day Free Returns</span>
-            <a href="#" style="font-size: 0.875rem; color: #111; text-decoration: underline;">Join Now</a>
-            <a href="#" style="font-size: 0.875rem; color:市区 text-decoration: underline;">View Details</a>
-        </div>
-    </div>
-</div>
 
 <!-- Order modal (shared) -->
 <div id="orderModal" class="order-modal" aria-hidden="true">
@@ -142,25 +137,25 @@
   <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="orderModalName">
     <button type="button" class="order-modal-close" aria-label="Close">&times;</button>
     <div class="order-modal-body">
-      <div class="d-flex gap-3 align-items-start">
-        <div class="product-preview">
-          <img id="orderModalImage" src="" alt="" />
+      <div class="d-flex flex-column flex-md-row gap-3 align-items-start">
+        <div class="product-preview w-100 w-md-auto">
+          <img id="orderModalImage" src="" alt="" class="img-fluid" />
         </div>
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 w-100">
           <h5 id="orderModalName" class="mb-1">Product name</h5>
           <div id="orderModalPrice" class="text-muted mb-3">$0</div>
 
           <div class="mb-2">
             <label for="orderSize">Size</label>
-            <select id="orderSize"></select>
+            <select id="orderSize" class="form-control"></select>
           </div>
           <div class="mb-2">
             <label for="orderColor">Color</label>
-            <select id="orderColor"></select>
+            <select id="orderColor" class="form-control"></select>
           </div>
           <div class="mb-2">
             <label for="orderQty">Quantity</label>
-            <input id="orderQty" type="number" min="1" value="1" />
+            <input id="orderQty" type="number" min="1" value="1" class="form-control" />
           </div>
         </div>
       </div>
@@ -172,26 +167,34 @@
   </div>
 </div>
 
+@{
+    var isAuth = (Context != null && Context.Session.GetInt32("UserId") != null) ? "true" : "false";
+}
+
 <script>
 // expose auth flag from server
 window.isAuthenticated = @isAuth;
 (function(){
     async function updateCartBadge(){
         const badge = document.getElementById('cartBadge');
+        if(!badge) return;
         try{
             if(window.isAuthenticated){
                 const res = await fetch('/Cart/GetCartCount');
                 if(res.ok){
                     const j = await res.json();
-                    if(badge) badge.textContent = (j.count || 0);
+                    badge.textContent = (j.count || 0);
+                    badge.style.display = (j.count > 0) ? 'inline' : 'none';
                     return;
                 }
             }
-            // fallback: localStorage
+            // fallback: localStorage (for non-authenticated users)
             const cart = JSON.parse(localStorage.getItem('cart')||'[]');
-            if(badge) badge.textContent = cart.length || 0;
-        }catch(e){ if(badge) badge.textContent = 0; }
+            badge.textContent = cart.length || 0;
+            badge.style.display = (cart.length > 0) ? 'inline' : 'none';
+        }catch(e){ badge.textContent = 0; badge.style.display = 'none'; }
     }
+    // Update cart badge after page interactions (e.g., after adding to cart)
     updateCartBadge();
 
     const modal = document.getElementById('orderModal');
@@ -217,20 +220,67 @@ window.isAuthenticated = @isAuth;
         if(!item) return;
 
         const name = item.querySelector('.card-body h5')?.textContent?.trim() || item.getAttribute('data-name') || '';
-        const price = item.getAttribute('data-price') || (item.querySelector('.card-body .fw-bold')?.textContent || '').replace('$','');
-        const img = item.querySelector('.card-thumb-img')?.getAttribute('src') || '';
+        
+        // Get price - ALWAYS prioritize data-price attribute (raw number from DB) to avoid parsing errors
+        let priceNum = 0;
+        
+        // FIRST: Get from data-price attribute - this is the accurate raw price from database
+        const dataPrice = item.getAttribute('data-price');
+        if (dataPrice) {
+            // data-price is already a number, just parse it
+            priceNum = parseFloat(dataPrice.toString().trim()) || 0;
+        }
+        
+        // SECOND: If no data-price, try to parse from displayed price text
+        if (!priceNum) {
+            // Check for discount price first (displayed in red text-danger class)
+            const discountPriceEl = item.querySelector('.card-body .text-danger.fw-bold');
+            const priceEl = discountPriceEl || item.querySelector('.card-body .fw-bold:not(.text-danger)');
+            
+            if (priceEl) {
+                const priceText = priceEl.textContent || '';
+                // Remove $ sign first
+                let cleanedPrice = priceText.replace('$', '').trim();
+                
+                // Handle European format (comma as decimal): "120,00" -> "120.00"
+                // If comma is followed by exactly 2 digits at the end, it's decimal separator
+                if (/,\d{2}$/.test(cleanedPrice)) {
+                    cleanedPrice = cleanedPrice.replace(',', '.');
+                }
+                // Handle thousand separators: if comma has 3 digits after it, it's thousand separator
+                else if (/,\d{3}/.test(cleanedPrice) && !/\.\d/.test(cleanedPrice)) {
+                    // Has comma with 3 digits after (thousand separator) and no dot = US format with comma
+                    cleanedPrice = cleanedPrice.replace(/,/g, '');
+                }
+                // If has both comma and dot: comma is thousand, dot is decimal
+                else if (/,/.test(cleanedPrice) && /\./.test(cleanedPrice)) {
+                    // US format: "1,200.50" - remove commas (thousand), keep dot (decimal)
+                    cleanedPrice = cleanedPrice.replace(/,/g, '');
+                }
+                // Otherwise, if only comma and not at end with 2 digits, it might be thousand separator
+                else if (/,/.test(cleanedPrice) && !/,\d{2}$/.test(cleanedPrice)) {
+                    cleanedPrice = cleanedPrice.replace(/,/g, '');
+                }
+                
+                priceNum = parseFloat(cleanedPrice) || 0;
+            }
+        }
+        
+        const img = item.querySelector('.card-thumb-img')?.getAttribute('src') || item.querySelector('img')?.getAttribute('src') || '';
         const productId = item.getAttribute('data-product-id') || '';
-
+        
         if(imgEl) imgEl.src = img;
         if(nameEl) nameEl.textContent = name;
-        if(priceEl) priceEl.textContent = price && price.toString().length ? (price.toString().startsWith('$') ? price : '$'+price) : '$0';
+        
+        // Format price for display - always show 2 decimal places
+        if(priceEl) priceEl.textContent = '$' + priceNum.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
         // populate defaults for size/color
         if(sizeEl){ sizeEl.innerHTML=''; ['6','6.5','7','7.5','8','8.5','9','10','11','12'].forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sizeEl.appendChild(o); }); }
         if(colorEl){ colorEl.innerHTML=''; ['White','Black','Red','Blue','Green','Grey'].forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; colorEl.appendChild(o); }); }
         if(qtyEl) qtyEl.value = 1;
 
-        modal.dataset.name = name; modal.dataset.price = price; modal.dataset.img = img; modal.dataset.productId = productId;
+        modal.dataset.name = name; modal.dataset.price = priceNum.toString(); modal.dataset.img = img; modal.dataset.productId = productId;
 
         showModal();
     });
@@ -240,12 +290,15 @@ window.isAuthenticated = @isAuth;
     document.addEventListener('keydown', function(e){ if(e.key==='Escape' && modal.classList.contains('show')) hideModal(); });
 
     addBtn.addEventListener('click', async function(){
+        // Get price directly from dataset which should be a clean number string
+        const priceFromDataset = parseFloat(modal.dataset.price || '0') || 0;
+        
         const item = {
             name: modal.dataset.name || nameEl.textContent,
-            price: modal.dataset.price || priceEl.textContent,
+            price: priceFromDataset, // Use parsed price directly
             img: modal.dataset.img || imgEl.src,
-            size: sizeEl?.value || '',
-            color: colorEl?.value || '',
+            size: (sizeEl?.value || '').trim(),
+            color: (colorEl?.value || '').trim(),
             qty: parseInt(qtyEl?.value||1,10),
             productId: modal.dataset.productId || null
         };
@@ -260,12 +313,15 @@ window.isAuthenticated = @isAuth;
             return;
         }
 
+        // Price is already parsed and stored in item.price as number
+        const priceValue = item.price;
+
         // send to server using form-encoded POST to Cart/AddToCart
         try{
             const form = new URLSearchParams();
             form.append('productId', item.productId || '0');
             form.append('productName', item.name || '');
-            form.append('price', (item.price||'').toString().replace('$',''));
+            form.append('price', priceValue.toString());
             form.append('imageUrl', item.img || '');
             form.append('quantity', (item.qty||1).toString());
             form.append('size', item.size || '');
@@ -285,7 +341,33 @@ window.isAuthenticated = @isAuth;
                 const txt = await res.text();
                 alert('Failed to add to cart: '+txt);
             }
-        }catch(e){ console.error(e); alert('Error adding to cart'); }
+        }catch(e){ alert('Error adding to cart'); }
     });
 })();
+
+// Search functionality
+(function(){
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    
+    if(searchForm && searchInput){
+        searchInput.addEventListener('keypress', function(e){
+            if(e.key === 'Enter'){
+                e.preventDefault();
+                const query = this.value.trim();
+                if(query.length > 0){
+                    searchForm.submit();
+                }
+            }
+        });
+        
+        searchInput.addEventListener('blur', function(){
+            const query = this.value.trim();
+            if(query.length === 0){
+                this.value = '';
+            }
+        });
+    }
+})();
 </script>
+

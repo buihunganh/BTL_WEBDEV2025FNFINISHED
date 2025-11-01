@@ -67,7 +67,14 @@ namespace BTL_WEBDEV2025.Controllers
                     var fileName = Path.GetFileNameWithoutExtension(f);
                     var relPath = f.Replace(webRoot, "").Replace('\\', '/');
                     var ext = Path.GetExtension(f);
-                    var dirInfo = new DirectoryInfo(Path.GetDirectoryName(f));
+                    var directoryName = Path.GetDirectoryName(f);
+                    if (string.IsNullOrEmpty(directoryName))
+                    {
+                        notFound++;
+                        log.Add($"Cannot get directory name from path: {f}");
+                        continue;
+                    }
+                    var dirInfo = new DirectoryInfo(directoryName);
                     var brandName = dirInfo.Name.ToLower();
 
                     // Tên file kiểu: adidas1, nike20...

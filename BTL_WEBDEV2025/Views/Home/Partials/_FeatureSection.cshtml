@@ -3,65 +3,38 @@
     <div class="container-fluid px-4">
         <h2 class="section-title text-center fw-bold mb-5">Feature</h2>
         <div class="row g-4">
-            <!-- Feature Card 1 -->
-            <div class="col-md-6 col-lg-3">
+@{
+    var featured = ViewBag.Featured as IEnumerable<BTL_WEBDEV2025.Models.Product> ?? new List<BTL_WEBDEV2025.Models.Product>();
+    var count = 0;
+    foreach (var p in featured)
+    {
+        if (count++ >= 8) break;
+        
+}
+}
+@{
+    var featuredLoop = ViewBag.Featured as IEnumerable<BTL_WEBDEV2025.Models.Product> ?? new List<BTL_WEBDEV2025.Models.Product>();
+    var i = 0;
+}
+@foreach (var p in (ViewBag.Featured as IEnumerable<BTL_WEBDEV2025.Models.Product> ?? new List<BTL_WEBDEV2025.Models.Product>()))
+{
+    if (i++ >= 8) { break; }
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                 <div class="feature-card h-100 border-0 overflow-hidden">
-                    <div class="feature-image d-flex align-items-center justify-content-center"
-                         style="height: 250px; background: #f5f7fa;">
-                        <img src="./media/images/home/adidas1.jpg" alt="Adidas" class="w-100 h-100" loading="lazy" decoding="async" />
+                    <div class="feature-image d-flex align-items-center justify-content-center" style="height: 250px; background: #f5f7fa;">
+                        <img src="@p.ImageUrl" alt="@p.Name" class="w-100 h-100" loading="lazy" decoding="async" />
                     </div>
                     <div class="p-4">
-                        <h5 class="fw-bold mb-2">Running Essentials</h5>
-                        <p class="text-muted small mb-3">Light, breathable, and ready for everyday runs.</p>
-                        <a href="#" class="btn btn-outline-dark w-100">Shop Now</a>
+                        <h5 class="fw-bold mb-1">@p.Name</h5>
+                        <p class="text-muted small mb-2">@p.Description</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="fw-bold">@String.Format(System.Globalization.CultureInfo.GetCultureInfo("en-US"), "{0:C}", p.Price)</div>
+                            <a href="/Products/Index" class="btn btn-outline-dark btn-sm">Shop Now</a>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Feature Card 2 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-card h-100 border-0 overflow-hidden">
-                    <div class="feature-image d-flex align-items-center justify-content-center"
-                         style="height: 250px; background: #e6f7f5;">
-                        <img src="./media/images/home/balenciaga1.jpg" alt="Balenciaga" class="w-100 h-100" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="p-4">
-                        <h5 class="fw-bold mb-2">Training Stability</h5>
-                        <p class="text-muted small mb-3">Steady support and traction for strength sessions.</p>
-                        <a href="#" class="btn btn-outline-dark w-100">Shop Now</a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Feature Card 3 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-card h-100 border-0 overflow-hidden">
-                    <div class="feature-image d-flex align-items-center justify-content-center"
-                         style="height: 250px; background: #ffe8d6;">
-                        <img src="/media/images/home/louboutin1.jpg" alt="Louboutin" class="w-100 h-100" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="p-4">
-                        <h5 class="fw-bold mb-2">Lifestyle Picks</h5>
-                        <p class="text-muted small mb-3">Effortless comfort and style for your everyday wardrobe.</p>
-                        <a href="#" class="btn btn-outline-dark w-100">Shop Now</a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Feature Card 4 -->
-            <div class="col-md-6 col-lg-3">
-                <div class="feature-card h-100 border-0 overflow-hidden">
-                    <div class="feature-image d-flex align-items-center justify-content-center"
-                         style="height: 250px; background: #e0e6ff;">
-                        <img src="./media/images/home/nike1.jpg" alt="Nike" class="w-100 h-100" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="p-4">
-                        <h5 class="fw-bold mb-2">Court Classics</h5>
-                        <p class="text-muted small mb-3">Timeless silhouettes reimagined with premium details.</p>
-                        <a href="#" class="btn btn-outline-dark w-100">Shop Now</a>
-                    </div>
-                </div>
-            </div>
+}
         </div>
     </div>
 </section>

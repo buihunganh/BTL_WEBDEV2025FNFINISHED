@@ -32,10 +32,10 @@ namespace BTL_WEBDEV2025.Controllers
             return View();
         }
 
-        // GET: Admin/Login
+        // GET: Admin/Login => dùng luồng đăng nhập hợp nhất
         public IActionResult Login()
         {
-            return View();
+            return RedirectToAction("Login", "Account");
         }
 
         // =====================
@@ -58,67 +58,6 @@ namespace BTL_WEBDEV2025.Controllers
                 totalOrders,
                 totalCustomers
             });
-        }
-
-        // New: list orders for admin
-        [HttpGet("/admin/api/orders")]
-        public async Task<IActionResult> GetOrders()
-        {
-            if (!IsAdmin()) return Unauthorized();
-
-            var list = await _db.Orders
-                .Include(o => o.User)
-                .OrderByDescending(o => o.CreatedAt)
-                .Select(o => new
-                {
-                    o.Id,
-                    UserId = o.UserId,
-                    UserName = o.User != null ? o.User.FullName : "",
-                    o.CreatedAt,
-                    o.TotalAmount,
-                    o.PaymentMethod,
-                    o.Status,
-                    o.PaymentToken,
-                    Items = o.OrderDetails.Count
-                }).ToListAsync();
-
-            return Ok(list);
-        }
-
-        // New: get order details
-        [HttpGet("/admin/api/orders/{id:int}")]
-        public async Task<IActionResult> GetOrderDetails(int id)
-        {
-            if (!IsAdmin()) return Unauthorized();
-
-            var order = await _db.Orders
-                .Include(o => o.User)
-                .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.Product)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
-            if (order == null) return NotFound();
-
-            var dto = new
-            {
-                order.Id,
-                order.UserId,
-                UserName = order.User?.FullName ?? "",
-                order.CreatedAt,
-                order.TotalAmount,
-                order.PaymentMethod,
-                order.Status,
-                order.PaymentToken,
-                Items = order.OrderDetails.Select(od => new {
-                    od.Id,
-                    od.ProductId,
-                    ProductName = od.Product?.Name ?? "",
-                    od.Quantity,
-                    od.UnitPrice
-                }).ToList()
-            };
-
-            return Ok(dto);
         }
 
         // =====================
@@ -194,6 +133,11 @@ namespace BTL_WEBDEV2025.Controllers
             public string? Category { get; set; }
         }
 
+        public class InventoryUpdateDto
+        {
+            public int StockQuantity { get; set; }
+        }
+
         [HttpPost("/admin/api/products/create")]
         public async Task<IActionResult> CreateProduct([FromBody] ProductUpsertDto dto)
         {
@@ -235,6 +179,37 @@ namespace BTL_WEBDEV2025.Controllers
             if (product == null) return NotFound();
             _db.Products.Remove(product);
             await _db.SaveChangesAsync();
+            return Ok();
+        }
+
+        // =====================
+        // INVENTORY (ProductVariants)
+        // =====================
+        [HttpGet("/admin/api/inventory")]
+        public IActionResult GetInventory()
+        {
+            if (!IsAdmin()) return Unauthorized();
+            var rows = _db.ProductVariants
+                .Select(v => new
+                {
+                    v.Id,
+                    v.ProductId,
+                    ProductName = _db.Products.Where(p => p.Id == v.ProductId).Select(p => p.Name).FirstOrDefault() ?? "",
+                    v.Size,
+                    v.Color,
+                    v.StockQuantity
+                }).ToList();
+            return Ok(rows);
+        }
+
+        [HttpPost("/admin/api/inventory/update/{id:int}")]
+        public IActionResult UpdateInventory(int id, [FromBody] InventoryUpdateDto dto)
+        {
+            if (!IsAdmin()) return Unauthorized();
+            var variant = _db.ProductVariants.FirstOrDefault(v => v.Id == id);
+            if (variant == null) return NotFound();
+            variant.StockQuantity = Math.Max(0, dto.StockQuantity);
+            _db.SaveChanges();
             return Ok();
         }
 
@@ -313,27 +288,20 @@ namespace BTL_WEBDEV2025.Controllers
             return Ok();
         }
 
-        // POST: Admin/Login
+        // POST: Admin/Login => chuyển sang luồng Account/Login
         [HttpPost]
         public IActionResult Login(string username, string password)
         {
-            // Demo authentication (nên sử dụng ASP.NET Identity trong production)
-            if (username == "admin" && password == "admin123")
-            {
-                HttpContext.Session.SetString("IsAdmin", "true");
-                return RedirectToAction("Index");
-            }
-            
-            ViewBag.Error = "Invalid credentials";
-            return View();
+            return RedirectToAction("Login", "Account");
         }
 
-        // POST: Admin/Logout
-        [HttpPost]
+        // GET: Admin/Logout (link trong menu)
+        [HttpGet]
         public IActionResult Logout()
         {
             HttpContext.Session.Remove("IsAdmin");
-            // Always return to unified Account login page
+            HttpContext.Session.Remove("UserId");
+            HttpContext.Session.Remove("UserEmail");
             return RedirectToAction("Login", "Account");
         }
 
@@ -543,12 +511,6 @@ namespace BTL_WEBDEV2025.Controllers
 
         private bool IsAdmin()
         {
-            // Check session IsAdmin flag (for Admin/Login route)
-            if (HttpContext.Session.GetString("IsAdmin") == "true")
-            {
-                return true;
-            }
-            
             // Check UserId and RoleId from Account login
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId.HasValue)
@@ -561,6 +523,55 @@ namespace BTL_WEBDEV2025.Controllers
             }
             
             return false;
+        }
+
+        // GET: Admin/Settings
+        public IActionResult Settings()
+        {
+            if (!IsAdmin()) return RedirectToAction("Login");
+            return View();
+        }
+
+        // POST: Admin/ChangeAdminPassword
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ChangeAdminPassword(string newPassword, string confirmPassword)
+        {
+            if (!IsAdmin()) return RedirectToAction("Login");
+
+            if (string.IsNullOrWhiteSpace(newPassword) || string.IsNullOrWhiteSpace(confirmPassword))
+            {
+                TempData["ChangePwdError"] = "Please fill in all required fields.";
+                return RedirectToAction("Settings");
+            }
+            if (newPassword != confirmPassword)
+            {
+                TempData["ChangePwdError"] = "Password confirmation does not match.";
+                return RedirectToAction("Settings");
+            }
+            if (newPassword.Length < 6 || newPassword.Length > 50)
+            {
+                TempData["ChangePwdError"] = "New password must be 6 to 50 characters.";
+                return RedirectToAction("Settings");
+            }
+
+            // Nếu admin đăng nhập theo tài khoản trong bảng Users (RoleId=1), cập nhật mật khẩu của tài khoản đó
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId.HasValue)
+            {
+                var user = _db.Users.FirstOrDefault(u => u.Id == userId.Value && u.RoleId == 1);
+                if (user != null)
+                {
+                    user.PasswordHash = newPassword; // plain per current project setup
+                    _db.SaveChanges();
+                    TempData["ChangePwdSuccess"] = "Admin password updated successfully.";
+                    return RedirectToAction("Settings");
+                }
+            }
+
+            // Fallback when session has no UserId (should not occur after auth unification)
+            TempData["ChangePwdError"] = "Please sign in with an Admin account (RoleId = 1) to change password.";
+            return RedirectToAction("Settings");
         }
     }
 }

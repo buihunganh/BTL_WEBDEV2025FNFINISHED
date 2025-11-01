@@ -19,10 +19,16 @@
         </div>
         <nav class="nav flex-column">
             <a class="nav-link @(ViewData["ActiveMenu"] as string == "dashboard" ? "active" : "")" asp-controller="Admin" asp-action="Index"><i class="bi bi-house"></i> <span>Overview</span></a>
-            <a class="nav-link @(ViewData["ActiveMenu"] as string == "products" ? "active" : "")" asp-controller="Admin" asp-action="Index" asp-route-tab="products"><i class="bi bi-box-seam"></i> <span>Products</span></a>
+            <div class="nav-item-group">
+                <a class="nav-link @(ViewData["ActiveMenu"] as string == "products" ? "active" : (ViewData["ActiveMenu"] as string == "inventory" ? "active" : "")) products-parent" asp-controller="Admin" asp-action="Index" asp-route-tab="products"><i class="bi bi-box-seam"></i> <span>Products</span></a>
+                <div class="submenu">
+                    <a class="nav-link ps-5 @(ViewData["ActiveMenu"] as string == "products" ? "active" : "")" asp-controller="Admin" asp-action="Index" asp-route-tab="products"><i class="bi bi-list"></i> <span>Manage products</span></a>
+                    <a class="nav-link ps-5 @(ViewData["ActiveMenu"] as string == "inventory" ? "active" : "")" asp-controller="Admin" asp-action="Index" asp-route-tab="inventory"><i class="bi bi-archive"></i> <span>Manage inventory</span></a>
+                </div>
+            </div>
             <a class="nav-link @(ViewData["ActiveMenu"] as string == "customers" ? "active" : "")" asp-controller="Admin" asp-action="Index" asp-route-tab="customers"><i class="bi bi-people"></i><span>Customers</span></a>
             <a class="nav-link @(ViewData["ActiveMenu"] as string == "report" ? "active" : "")" asp-controller="Admin" asp-action="Index" asp-route-tab="report"><i class="bi bi-clipboard-data"></i> <span>Reports</span></a>
-            <a class="nav-link @(ViewData["ActiveMenu"] as string == "settings" ? "active" : "")" asp-controller="Admin" asp-action="Index" asp-route-tab="settings"><i class="bi bi-gear"></i> <span>Settings</span></a>
+            <a class="nav-link @(ViewData["ActiveMenu"] as string == "settings" ? "active" : "")" asp-controller="Admin" asp-action="Settings"><i class="bi bi-gear"></i> <span>Settings</span></a>
             <a class="nav-link logout-link mt-3" asp-controller="Admin" asp-action="Logout"><i class="bi bi-box-arrow-right"></i> <span>Logout</span></a>
         </nav>
         <div class="admin-avatar">
@@ -30,6 +36,11 @@
             <span class="ava-name">Admin</span>
         </div>
     </div>
+    <style>
+        .nav-item-group .submenu{ display:none; }
+        .nav-item-group:hover .submenu{ display:block; }
+        .nav-item-group .submenu .nav-link{ font-size: .95rem; }
+    </style>
     <div class="admin-content">
         @RenderBody()
     </div>

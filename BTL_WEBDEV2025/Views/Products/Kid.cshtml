@@ -17,40 +17,14 @@
                 }
             }
         </div>
-        <form class="row row-cols-2 row-cols-md-auto g-2 align-items-end filter-bar shadow-sm p-2 rounded bg-white flex-nowrap my-2" autocomplete="off" onsubmit="return false;">
-            <div class="col-auto">
-                <label class="form-label small text-muted">Min price</label>
-                <input type="number" min="0" step="1" class="form-control border-0 bg-light" id="kidMinPrice" style="width:100px;">
-            </div>
-            <div class="col-auto">
-                <label class="form-label small text-muted">Max price</label>
-                <input type="number" min="0" step="1" class="form-control border-0 bg-light" id="kidMaxPrice" style="width:100px;">
-            </div>
-            <div class="col-auto">
-                <label class="form-label small text-muted">Brand</label>
-                <select class="form-select border-0 bg-light" id="kidBrandSelect">
-                    <option value="">All</option>
-                    @if (brands != null)
-                    {
-                        foreach (var b in brands)
-                        {
-                            <option value="@b">@b</option>
-                        }
-                    }
-                </select>
-            </div>
-            <div class="col-auto">
-                <label class="form-label small text-muted">Sort</label>
-                <select class="form-select border-0 bg-light" id="kidSortPrice">
-                    <option value="asc">Price ↑</option>
-                    <option value="desc">Price ↓</option>
-                </select>
-            </div>
-            <div class="col-auto d-flex gap-1">
-                <button type="button" class="btn btn-primary btn-sm px-3" id="kidApplyFilters"><i class="bi bi-funnel"></i> Filter</button>
-                <button type="button" class="btn btn-secondary btn-sm px-2" id="kidResetFilters" title="Clear filters"><i class="bi bi-x-lg"></i></button>
-            </div>
-        </form>
+        @await Component.InvokeAsync("ProductFilter", new { 
+            minPriceId = "kidMinPrice", 
+            maxPriceId = "kidMaxPrice", 
+            brandSelectId = "kidBrandSelect", 
+            sortSelectId = "kidSortPrice", 
+            applyButtonId = "kidApplyFilters", 
+            resetButtonId = "kidResetFilters" 
+        })
     </div>
 
     <!-- All products -->

@@ -5,12 +5,12 @@
     var isProducts = string.Equals(tab, "products", StringComparison.OrdinalIgnoreCase);
     var isCustomers = string.Equals(tab, "customers", StringComparison.OrdinalIgnoreCase);
     var isReport = string.Equals(tab, "report", StringComparison.OrdinalIgnoreCase);
-    var isOrders = string.Equals(tab, "orders", StringComparison.OrdinalIgnoreCase);
-    ViewData["ActiveMenu"] = isReport ? "report" : (isCustomers ? "customers" : (isProducts ? "products" : "dashboard"));
+    var isInventory = string.Equals(tab, "inventory", StringComparison.OrdinalIgnoreCase);
+    ViewData["ActiveMenu"] = isInventory ? "inventory" : (isReport ? "report" : (isCustomers ? "customers" : (isProducts ? "products" : "dashboard")));
 }
 
 <div class="container-fluid px-4 my-4">
-    @if (!isProducts && !isCustomers && !isOrders) {
+    @if (!isProducts && !isCustomers && !isInventory && !isReport) {
         <h1 class="fw-bold mb-4">Overview</h1>
         <div class="row g-4 mb-4">
             <div class="col-6 col-md-3">
@@ -99,6 +99,30 @@
         </div>
     }
 
+    @if (isInventory) {
+        <div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h1 class="fw-bold">Inventory</h1>
+                <button class="btn btn-outline-secondary" id="btnReloadStock">Reload</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Variant ID</th>
+                            <th>Product</th>
+                            <th>Size</th>
+                            <th>Color</th>
+                            <th>Stock</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableInventory"></tbody>
+                </table>
+            </div>
+        </div>
+    }
+
     @if (isCustomers) {
         <div>
             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -148,47 +172,6 @@
                     <canvas id="reportSeries" height="60"></canvas>
                 </div>
             </div>
-        </div>
-    }
-
-    @if (isOrders) {
-        <div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h1 class="fw-bold">Order Management</h1>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-striped align-middle">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Customer</th>
-                            <th>Created</th>
-                            <th>Items</th>
-                            <th>Total</th>
-                            <th>Pay By</th>
-                            <th>Status</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableOrders"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Order details modal -->
-        <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Order Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body" id="orderDetailsBody"></div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-              </div>
-            </div>
-          </div>
         </div>
     }
 </div>
@@ -285,73 +268,26 @@
         const isProducts = '@(isProducts)'.toLowerCase() === 'true';
         const isCustomers = '@(isCustomers)'.toLowerCase() === 'true';
         const isReport = '@(isReport)'.toLowerCase() === 'true';
-        const isOrders = '@(isOrders)'.toLowerCase() === 'true';
+        const isInventory = '@(isInventory)'.toLowerCase() === 'true';
 
         // Tổng quan: nạp stats + chart
-        if (!isProducts && !isCustomers && !isOrders) {
+        if (!isProducts && !isCustomers) {
             fetchJson('/admin/api/stats').then(s => {
                 document.getElementById('stat-sales').textContent = fmtUSD(s.totalSales);
                 document.getElementById('stat-orders').textContent = s.totalOrders;
                 document.getElementById('stat-customers').textContent = s.totalCustomers;
-            }).catch(console.error);
+            }).catch(function(error) { /* Stats fetch error */ });
 
             const ctx = document.getElementById('salesChart')?.getContext('2d');
             if (ctx) {
                 new Chart(ctx, {
                     type: 'line',
                     data: { labels: ['02.08','03.08','10.08','20.08','30.08'], datasets: [
-                        {label:'Số lượng bán',data:[4,6,6,3,1],borderColor:'#ef4a64',backgroundColor:'rgba(239,74,100,0.13)',tension:0.25},
-                        {label:'Doanh số bán',data:[2,5,6,4,2],borderColor:'#2062e9',backgroundColor:'rgba(32,98,233,0.13)',tension:0.25}
+                        {label:'Units sold',data:[4,6,6,3,1],borderColor:'#ef4a64',backgroundColor:'rgba(239,74,100,0.13)',tension:0.25},
+                        {label:'Sales revenue',data:[2,5,6,4,2],borderColor:'#2062e9',backgroundColor:'rgba(32,98,233,0.13)',tension:0.25}
                     ]}, options:{ responsive:true, plugins:{ legend:{ display:true, position:'top' } } }
                 });
             }
-        }
-
-        // Orders: list + details
-        async function loadOrders(){
-            const rows = await fetchJson('/admin/api/orders');
-            const tb = document.getElementById('tableOrders'); if(!tb) return;
-            tb.innerHTML = rows.map(o=>`
-                <tr>
-                  <td>${o.id}</td>
-                  <td>${o.userName||''}</td>
-                  <td>${new Date(o.createdAt).toLocaleString()}</td>
-                  <td>${o.items}</td>
-                  <td>${fmtUSD(o.totalAmount)}</td>
-                  <td>${o.paymentMethod||''}</td>
-                  <td>${o.status||''}</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrder(${o.id})">View</button>
-                  </td>
-                </tr>`).join('');
-        }
-        async function viewOrder(id){
-            try{
-                const dto = await fetchJson('/admin/api/orders/' + id);
-                const body = document.getElementById('orderDetailsBody');
-                body.innerHTML = '';
-                const h = document.createElement('div');
-                h.innerHTML = `<div class="mb-2"><strong>Order #${dto.id}</strong> — ${dto.userName} — ${new Date(dto.createdAt).toLocaleString()}</div>`;
-                body.appendChild(h);
-                const tbl = document.createElement('table'); tbl.className = 'table';
-                tbl.innerHTML = `<thead><tr><th>Product</th><th>Qty</th><th>Unit</th><th>Subtotal</th></tr></thead>`;
-                const tbod = document.createElement('tbody');
-                dto.items.forEach(i=>{
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${i.productName}</td><td>${i.quantity}</td><td>${fmtUSD(i.unitPrice)}</td><td>${fmtUSD(i.quantity * i.unitPrice)}</td>`;
-                    tbod.appendChild(tr);
-                });
-                tbl.appendChild(tbod);
-                body.appendChild(tbl);
-                const info = document.createElement('div'); info.className='mt-2'; info.innerHTML = `<strong>Total:</strong> ${fmtUSD(dto.totalAmount)}<br/><strong>Pay By:</strong> ${dto.paymentMethod || ''}<br/><strong>Status:</strong> ${dto.status || ''}`;
-                body.appendChild(info);
-                const modalEl = document.getElementById('orderDetailsModal');
-                const modal = new bootstrap.Modal(modalEl); modal.show();
-            }catch(e){ console.error(e); alert('Failed to load order'); }
-        }
-
-        if (isOrders) {
-            loadOrders();
         }
 
         // Products: list + CRUD
@@ -368,8 +304,8 @@
                   <td>${p.category||''}</td>
                   <td>${p.imageUrl?`<img src="${p.imageUrl}" style="height:40px">`:''}</td>
                   <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${p.id})">Sửa</button>
-                    <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteProduct(${p.id})">Xóa</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="editProduct(${p.id})">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})">Delete</button>
                   </td>
                 </tr>`).join('');
         }
@@ -418,7 +354,7 @@
         }
         document.getElementById('saveProductBtn')?.addEventListener('click', saveProduct);
         async function deleteProduct(id){
-            if(!confirm('Xóa sản phẩm?')) return;
+            if(!confirm('Delete this product?')) return;
             await fetchJson(`/admin/api/products/delete/${id}`,{ method:'POST' });
             await loadProducts();
         }
@@ -440,8 +376,8 @@
                   <td>${c.phoneNumber||''}</td>
                   <td>${c.dateOfBirth? new Date(c.dateOfBirth).toLocaleDateString(): ''}</td>
                   <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="editCustomer(${c.id})">Sửa</button>
-                    <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteCustomer(${c.id})">Xóa</button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="editCustomer(${c.id})">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger ms-2" onclick="deleteCustomer(${c.id})">Delete</button>
                   </td>
                 </tr>`).join('');
         }
@@ -487,7 +423,7 @@
         }
         document.getElementById('saveCustomerBtn')?.addEventListener('click', saveCustomer);
         async function deleteCustomer(id){
-            if(!confirm('Xóa khách hàng?')) return;
+            if(!confirm('Delete this customer?')) return;
             await fetchJson(`/admin/api/customers/delete/${id}`,{ method:'POST' });
             await loadCustomers();
         }
@@ -495,6 +431,30 @@
             loadCustomers();
             document.getElementById('btnAddCustomer')?.addEventListener('click', addCustomer);
             window.editCustomer = editCustomer; window.deleteCustomer = deleteCustomer;
+        }
+
+        // Inventory: list + inline update
+        async function loadInventory(){
+            const rows = await fetchJson('/admin/api/inventory');
+            const tb = document.getElementById('tableInventory'); if(!tb) return;
+            tb.innerHTML = rows.map(v=>`
+                <tr>
+                  <td>${v.id}</td>
+                  <td>${v.productName} (#${v.productId})</td>
+                  <td>${v.size}</td>
+                  <td>${v.color}</td>
+                  <td><input type="number" class="form-control form-control-sm w-auto" value="${v.stockQuantity}" min="0" id="stk-${v.id}" /></td>
+                  <td><button class="btn btn-sm btn-dark" onclick="updateStock(${v.id})">Save</button></td>
+                </tr>`).join('');
+        }
+        async function updateStock(id){
+            const val = parseInt(document.getElementById('stk-'+id).value||'0',10);
+            await fetchJson(`/admin/api/inventory/update/${id}`,{ method:'POST', body: JSON.stringify({ stockQuantity: val }) });
+        }
+        if (isInventory){
+            loadInventory();
+            document.getElementById('btnReloadStock')?.addEventListener('click', loadInventory);
+            window.updateStock = updateStock;
         }
 
         // Report minimal

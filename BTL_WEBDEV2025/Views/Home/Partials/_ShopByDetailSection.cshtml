@@ -3,97 +3,42 @@
     <div class="container-fluid px-4">
         <h2 class="section-title text-center fw-bold mb-4">Shop by Icon</h2>
         <div class="sbd-track">
-            <!-- Base 7 items -->
+@{
+    var icons = (ViewBag.BrandIcons as IEnumerable<(string Brand, string ImageUrl)>)?.ToList() ?? new List<(string,string)>();
+    // Nếu thiếu, thêm placeholder để đảm bảo hiệu ứng loop
+    if (icons.Count == 0) {
+        icons.Add(("Nike", "/media/images/home/nike1.jpg"));
+        icons.Add(("Adidas", "/media/images/home/adidas1.jpg"));
+        icons.Add(("Balenciaga", "/media/images/home/balenciaga1.jpg"));
+    }
+}
+@* Base items *@
+@foreach (var it in icons)
+{
             <div class="sbd-item">
-                <a class="sbd-card d-block text-decoration-none" href="#">
+                <a class="sbd-card d-block text-decoration-none" asp-controller="Products" asp-action="Men" asp-fragment="brand-@it.Brand">
                     <div class="sbd-thumb">
-                        <img src="/media/images/home/nike1.jpg" alt="Nike" loading="lazy" decoding="async" />
+                        <img src="@it.ImageUrl" alt="@it.Brand" loading="lazy" decoding="async" />
                     </div>
-                    <div class="sbd-label">Nike</div>
+                    <div class="sbd-label">@it.Brand</div>
                 </a>
             </div>
-
-            <!-- Item 2 -->
-            <div class="sbd-item">
-                <a class="sbd-card d-block text-decoration-none" href="#">
+}
+@* Duplicate multiple times for endless loop *@
+@for (var k = 0; k < 2; k++)
+{
+    foreach (var it in icons)
+    {
+            <div class="sbd-item" aria-hidden="true">
+                <a class="sbd-card d-block text-decoration-none" asp-controller="Products" asp-action="Men" asp-fragment="brand-@it.Brand">
                     <div class="sbd-thumb">
-                        <img src="/media/images/home/adidas1.jpg" alt="P-6000" loading="lazy" decoding="async" />
+                        <img src="@it.ImageUrl" alt="" loading="lazy" decoding="async" />
                     </div>
-                    <div class="sbd-label">P-6000</div>
+                    <div class="sbd-label">@it.Brand</div>
                 </a>
             </div>
-
-            <!-- Item 3 -->
-            <div class="sbd-item">
-                <a class="sbd-card d-block text-decoration-none" href="#">
-                    <div class="sbd-thumb">
-                        <img src="/media/images/home/balenciaga1.jpg" alt="Metcon" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="sbd-label">Metcon</div>
-                </a>
-            </div>
-
-            <!-- Item 4 -->
-            <div class="sbd-item">
-                <a class="sbd-card d-block text-decoration-none" href="#">
-                    <div class="sbd-thumb">
-                        <img src="/media/images/home/louboutin1.jpg" alt="Air Max" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="sbd-label">Air Max</div>
-                </a>
-            </div>
-
-            <!-- Item 5 -->
-            <div class="sbd-item">
-                <a class="sbd-card d-block text-decoration-none" href="#">
-                    <div class="sbd-thumb">
-                        <img src="/media/images/home/nike1.jpg" alt="Blazer" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="sbd-label">Blazer</div>
-                </a>
-            </div>
-
-            <!-- Item 6 -->
-            <div class="sbd-item">
-                <a class="sbd-card d-block text-decoration-none" href="#">
-                    <div class="sbd-thumb">
-                        <img src="/media/images/home/adidas1.jpg" alt="Dunk" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="sbd-label">Dunk</div>
-                </a>
-            </div>
-            <!-- Item 7 -->
-            <div class="sbd-item">
-                <a class="sbd-card d-block text-decoration-none" href="#">
-                    <div class="sbd-thumb">
-                        <img src="/media/images/home/balenciaga1.jpg" alt="Pegasus" loading="lazy" decoding="async" />
-                    </div>
-                    <div class="sbd-label">Pegasus</div>
-                </a>
-            </div>
-
-            <!-- duplicated 7 items for seamless loop -->
-            <div class="sbd-item" aria-hidden="true">
-                <a class="sbd-card d-block text-decoration-none" href="#"><div class="sbd-thumb"><img src="/media/images/home/nike1.jpg" alt=""/></div><div class="sbd-label">Nike</div></a>
-            </div>
-            <div class="sbd-item" aria-hidden="true">
-                <a class="sbd-card d-block text-decoration-none" href="#"><div class="sbd-thumb"><img src="/media/images/home/adidas1.jpg" alt=""/></div><div class="sbd-label">P-6000</div></a>
-            </div>
-            <div class="sbd-item" aria-hidden="true">
-                <a class="sbd-card d-block text-decoration-none" href="#"><div class="sbd-thumb"><img src="/media/images/home/balenciaga1.jpg" alt=""/></div><div class="sbd-label">Metcon</div></a>
-            </div>
-            <div class="sbd-item" aria-hidden="true">
-                <a class="sbd-card d-block text-decoration-none" href="#"><div class="sbd-thumb"><img src="/media/images/home/louboutin1.jpg" alt=""/></div><div class="sbd-label">Air Max</div></a>
-            </div>
-            <div class="sbd-item" aria-hidden="true">
-                <a class="sbd-card d-block text-decoration-none" href="#"><div class="sbd-thumb"><img src="/media/images/home/nike1.jpg" alt=""/></div><div class="sbd-label">Blazer</div></a>
-            </div>
-            <div class="sbd-item" aria-hidden="true">
-                <a class="sbd-card d-block text-decoration-none" href="#"><div class="sbd-thumb"><img src="/media/images/home/adidas1.jpg" alt=""/></div><div class="sbd-label">Dunk</div></a>
-            </div>
-            <div class="sbd-item" aria-hidden="true">
-                <a class="sbd-card d-block text-decoration-none" href="#"><div class="sbd-thumb"><img src="/media/images/home/balenciaga1.jpg" alt=""/></div><div class="sbd-label">Pegasus</div></a>
-            </div>
+    }
+}
         </div>
     </div>
 </section>
