@@ -4,11 +4,9 @@ using BTL_WEBDEV2025.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Controllers with TempData Session Provider
 builder.Services.AddControllersWithViews()
     .AddSessionStateTempDataProvider();
 
-// Database: Choose provider by configuration (SqlServer default, Sqlite optional)
 var databaseProvider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "SqlServer";
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -23,7 +21,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
-// Sessions for simple auth state
 builder.Services.AddSession(options =>
 {
     options.Cookie.HttpOnly = true;
@@ -65,7 +62,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Apply pending migrations and seed minimal data (roles/admin) on startup
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -73,7 +69,6 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
 
-        // Seed Roles
         if (!db.Roles.Any())
         {
             db.Roles.AddRange(
@@ -83,13 +78,12 @@ using (var scope = app.Services.CreateScope())
             db.SaveChanges();
         }
 
-        // Seed a default admin if missing
         if (!db.Users.Any(u => u.RoleId == 1))
         {
             db.Users.Add(new BTL_WEBDEV2025.Models.User
             {
                 Email = "admin@nike.com",
-                PasswordHash = "admin123", // demo only
+                PasswordHash = "admin123",
                 FullName = "Admin Account",
                 PhoneNumber = "123456",
                 RoleId = 1

@@ -14,9 +14,7 @@ namespace BTL_WEBDEV2025.Controllers
         private readonly ILogger<CartController> _logger;
         private const string CartSessionKey = "ShoppingCart";
 
-        // Simple in-memory payment tracking for demo
         private static readonly ConcurrentDictionary<string, bool> _paymentStatus = new ConcurrentDictionary<string, bool>();
-        // Map token (GUID) -> numeric order id (for reference)
         private static readonly ConcurrentDictionary<string, int> _orderTokenMap = new ConcurrentDictionary<string, int>();
 
         private readonly AppDbContext _db;
@@ -27,7 +25,6 @@ namespace BTL_WEBDEV2025.Controllers
             _db = db;
         }
 
-        // GET: Cart
         public IActionResult Index()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
@@ -41,13 +38,11 @@ namespace BTL_WEBDEV2025.Controllers
             return View(cartItems);
         }
 
-        // POST: Cart/Add
         [HttpPost]
         public IActionResult AddToCart(int productId, string productName, decimal price, string imageUrl, int quantity = 1, string size = "", string color = "")
         {
             var cartItems = GetCartItems();
             
-            // Match by product + selected variant (size & color)
             var existingItem = cartItems.FirstOrDefault(x => x.ProductId == productId 
                                                             && string.Equals(x.Size ?? string.Empty, size ?? string.Empty, StringComparison.OrdinalIgnoreCase)
                                                             && string.Equals(x.Color ?? string.Empty, color ?? string.Empty, StringComparison.OrdinalIgnoreCase));
@@ -74,7 +69,6 @@ namespace BTL_WEBDEV2025.Controllers
             return Json(new { success = true, count = cartItems.Count });
         }
 
-        // POST: Cart/Remove
         [HttpPost]
         public IActionResult RemoveFromCart(int productId, string size = "", string color = "")
         {
@@ -87,7 +81,6 @@ namespace BTL_WEBDEV2025.Controllers
             return Json(new { success = true, count = cartItems.Count });
         }
 
-        // POST: Cart/Update
         [HttpPost]
         public IActionResult UpdateCart(int productId, string size = "", string color = "", int quantity = 1)
         {
@@ -112,7 +105,6 @@ namespace BTL_WEBDEV2025.Controllers
             return Json(new { success = true, count = cartItems.Count });
         }
 
-        // GET: Cart/Count
         [HttpGet]
         public IActionResult GetCartCount()
         {
@@ -120,7 +112,6 @@ namespace BTL_WEBDEV2025.Controllers
             return Json(new { count = cartItems.Sum(x => x.Quantity) });
         }
 
-        // POST: Cart/Clear
         [HttpPost]
         public IActionResult ClearCart()
         {
@@ -128,15 +119,22 @@ namespace BTL_WEBDEV2025.Controllers
             return Json(new { success = true });
         }
 
-        // POST: Cart/Checkout
         [HttpPost]
-        public async Task<IActionResult> Checkout([FromForm] string fullName, [FromForm] string address, [FromForm] string email, [FromForm] string phone, [FromForm] string paymentMethod)
+        public async Task<IActionResult> Checkout([FromForm] CheckoutViewModel model)
         {
-            // require authenticated user
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
             {
                 return Json(new { success = false, needLogin = true });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(x => x.Value?.Errors.Count > 0)
+                    .Select(x => new { Field = x.Key, Errors = x.Value?.Errors.Select(e => e.ErrorMessage) })
+                    .ToList();
+                return Json(new { success = false, message = "Validation failed", errors = errors });
             }
 
             var cartItems = GetCartItems();
@@ -145,23 +143,22 @@ namespace BTL_WEBDEV2025.Controllers
                 return Json(new { success = false, message = "Cart is empty" });
             }
 
-            // create order token used for tracking
+            var fullName = model.FullName?.Trim() ?? string.Empty;
+            var address = model.Address?.Trim() ?? string.Empty;
+            var email = model.Email?.Trim() ?? string.Empty;
+            var phone = model.Phone?.Trim() ?? string.Empty;
+            var paymentMethod = model.PaymentMethod?.Trim() ?? string.Empty;
+
             var orderGuid = System.Guid.NewGuid().ToString();
-            // default in-memory payment status
             _paymentStatus[orderGuid] = false;
 
-            // Calculate total
             decimal total = cartItems.Sum(x => x.Price * x.Quantity);
-
-            // Save order and details to DB in a transaction
             using var tx = await _db.Database.BeginTransactionAsync();
             try
             {
-                // normalize payment method value and map to simple labels
                 var pmNorm = (paymentMethod ?? string.Empty).Trim().ToLowerInvariant();
                 var payByValue = pmNorm == "cod" ? "cash" : (pmNorm == "transfer" ? "bank" : pmNorm);
 
-                // Determine initial status per request: cash -> Unpaid, bank/qr -> Paid
                 string initialStatus;
                 if (payByValue == "cash") initialStatus = "Unpaid";
                 else if (payByValue == "bank" || payByValue == "qr" || payByValue == "transfer" || payByValue == "card") initialStatus = "Paid";
@@ -174,13 +171,16 @@ namespace BTL_WEBDEV2025.Controllers
                     TotalAmount = total,
                     PaymentMethod = payByValue,
                     PaymentToken = orderGuid,
-                    Status = initialStatus
+                    Status = initialStatus,
+                    ShippingAddress = address,
+                    NotificationEmail = email
                 };
 
                 _db.Orders.Add(order);
-                await _db.SaveChangesAsync(); // generates order.Id
+                await _db.SaveChangesAsync();
 
-                // store mapping token -> numeric order id for reference
+                _logger.LogInformation("Order created: OrderId={OrderId}, UserId={UserId}, Total={Total}, Address={Address}", order.Id, userId.Value, total, address ?? "N/A");
+
                 _orderTokenMap[orderGuid] = order.Id;
 
                 foreach (var it in cartItems)
@@ -196,15 +196,25 @@ namespace BTL_WEBDEV2025.Controllers
                 }
 
                 await _db.SaveChangesAsync();
-                await tx.CommitAsync();
+                _logger.LogInformation("OrderDetails saved: OrderId={OrderId}, DetailCount={Count}, NotificationEmail={Email}", order.Id, cartItems.Count, email ?? "N/A");
 
-                // set in-memory payment flag to reflect initial status
+                await tx.CommitAsync();
+                _logger.LogInformation("Transaction committed successfully: OrderId={OrderId}", order.Id);
+
+                var orderDetailCount = await _db.OrderDetails.CountAsync(od => od.OrderId == order.Id);
+                if (orderDetailCount != cartItems.Count)
+                {
+                    _logger.LogError("OrderDetails verification failed: OrderId={OrderId}, Expected={Expected}, Found={Found}", 
+                        order.Id, cartItems.Count, orderDetailCount);
+                    return Json(new { success = false, message = "Order details were not saved properly" });
+                }
+                
+                _logger.LogInformation("Order verification successful: OrderId={OrderId}, DetailCount={Count}", order.Id, orderDetailCount);
+
                 _paymentStatus[orderGuid] = initialStatus == "Paid";
 
-                // Clear cart after creating order
                 SaveCartItems(new List<ShoppingCartItem>());
 
-                // Prepare payment instructions depending on method (keep QR flow for 'transfer')
                 string paymentInstructions = string.Empty;
                 if (!string.IsNullOrWhiteSpace(pmNorm) && pmNorm.Equals("transfer", StringComparison.OrdinalIgnoreCase))
                 {
@@ -218,10 +228,7 @@ namespace BTL_WEBDEV2025.Controllers
                             var lanIp = entry.AddressList.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(a))?.ToString();
                             if (!string.IsNullOrEmpty(lanIp)) hostForQr = lanIp;
                         }
-                        catch
-                        {
-                            // ignore and fallback to Request.Host
-                        }
+                        catch { }
                     }
 
                     var path = Url.Action("ConfirmPayment", "Cart", new { orderId = orderGuid });
@@ -246,18 +253,28 @@ namespace BTL_WEBDEV2025.Controllers
             }
             catch (Exception ex)
             {
-                await tx.RollbackAsync();
-                _logger.LogError(ex, "Checkout save failed");
-                return Json(new { success = false, message = "Failed to create order" });
+                try
+                {
+                    await tx.RollbackAsync();
+                    _logger.LogError(ex, "Checkout transaction rolled back. UserId={UserId}, Total={Total}, Error={Error}", userId.Value, total, ex.Message);
+                }
+                catch (Exception rollbackEx)
+                {
+                    _logger.LogError(rollbackEx, "Failed to rollback transaction");
+                }
+                
+                _logger.LogError(ex, "Checkout save failed. UserId={UserId}, CartItems={Count}, ExceptionType={Type}", 
+                    userId.Value, cartItems?.Count ?? 0, ex.GetType().Name);
+                _logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
+                
+                return Json(new { success = false, message = $"Failed to create order: {ex.Message}" });
             }
         }
 
-        // GET: Cart/ConfirmPayment?orderId=...
         [HttpGet]
         public IActionResult ConfirmPayment(string orderId)
         {
             if (string.IsNullOrEmpty(orderId)) return Content("Invalid order");
-            // Return a small page which will POST to the server to mark payment as confirmed.
             var postUrl = Url.Action("ConfirmPaymentPost", "Cart");
             var html = $"<!doctype html><html><head><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Confirming...</title></head><body style=\"font-family:Arial,Helvetica,sans-serif;padding:20px;text-align:center\">" +
                        $"<h3>Processing payment confirmation...</h3>" +
@@ -268,14 +285,12 @@ namespace BTL_WEBDEV2025.Controllers
             return Content(html, "text/html");
         }
 
-        // POST: Cart/ConfirmPaymentPost (JSON body)
         [HttpPost]
         public async Task<IActionResult> ConfirmPaymentPost([FromBody] ConfirmPaymentRequest req)
         {
             if (req == null || string.IsNullOrEmpty(req.OrderId)) return BadRequest(new { success = false });
             _paymentStatus[req.OrderId] = true;
 
-            // Persist status in DB using PaymentToken
             try
             {
                 var order = await _db.Orders.FirstOrDefaultAsync(o => o.PaymentToken == req.OrderId);
@@ -299,7 +314,6 @@ namespace BTL_WEBDEV2025.Controllers
             return Json(new { success = true });
         }
 
-        // GET: Cart/CheckPaymentStatus?orderId=...
         [HttpGet]
         public IActionResult CheckPaymentStatus(string orderId)
         {

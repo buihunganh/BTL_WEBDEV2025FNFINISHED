@@ -109,20 +109,24 @@
       <div class="row">
         <div class="col-12 col-md-6">
           <div class="mb-2">
-            <label for="checkoutName">Full name</label>
-            <input id="checkoutName" class="form-control" type="text" />
+            <label for="checkoutName">Full name <span class="text-danger">*</span></label>
+            <input id="checkoutName" class="form-control" type="text" required minlength="2" maxlength="100" pattern="^[a-zA-Z\s'-]+$" />
+            <div id="checkoutNameError" class="text-danger small mt-1" style="display:none;"></div>
           </div>
           <div class="mb-2">
-            <label for="checkoutAddress">Address</label>
-            <input id="checkoutAddress" class="form-control" type="text" />
+            <label for="checkoutAddress">Delivery address (for notification only) <span class="text-danger">*</span></label>
+            <input id="checkoutAddress" class="form-control" type="text" required minlength="10" maxlength="200" placeholder="Address for order delivery notifications" />
+            <div id="checkoutAddressError" class="text-danger small mt-1" style="display:none;"></div>
           </div>
           <div class="mb-2">
-            <label for="checkoutEmail">Email</label>
-            <input id="checkoutEmail" class="form-control" type="email" />
+            <label for="checkoutEmail">Email (for notifications only) <span class="text-danger">*</span></label>
+            <input id="checkoutEmail" class="form-control" type="email" required maxlength="100" placeholder="Email to receive order updates" />
+            <div id="checkoutEmailError" class="text-danger small mt-1" style="display:none;"></div>
           </div>
           <div class="mb-2">
-            <label for="checkoutPhone">Phone</label>
-            <input id="checkoutPhone" class="form-control" type="tel" />
+            <label for="checkoutPhone">Phone <span class="text-danger">*</span></label>
+            <input id="checkoutPhone" class="form-control" type="tel" required pattern="^(\+84|0)[0-9]{9,10}$" placeholder="e.g., 0912345678 or +84912345678" />
+            <div id="checkoutPhoneError" class="text-danger small mt-1" style="display:none;"></div>
           </div>
         </div>
         <div class="col-12 col-md-6 mt-3 mt-md-0">
@@ -262,28 +266,128 @@
             closeBtn.addEventListener('click', hideModal);
             document.addEventListener('keydown', function(e){ if(e.key==='Escape' && modal.classList.contains('show')) hideModal(); });
 
-            confirmBtn.addEventListener('click', async function(){
+            function clearErrors(){
+                ['checkoutName', 'checkoutAddress', 'checkoutEmail', 'checkoutPhone'].forEach(id => {
+                    const errorEl = document.getElementById(id + 'Error');
+                    if(errorEl) {
+                        errorEl.style.display = 'none';
+                        errorEl.textContent = '';
+                    }
+                    const inputEl = document.getElementById(id);
+                    if(inputEl) inputEl.classList.remove('is-invalid');
+                });
+            }
+
+            function showError(fieldId, message){
+                const errorEl = document.getElementById(fieldId + 'Error');
+                const inputEl = document.getElementById(fieldId);
+                if(errorEl) {
+                    errorEl.textContent = message;
+                    errorEl.style.display = 'block';
+                }
+                if(inputEl) inputEl.classList.add('is-invalid');
+            }
+
+            function validateForm(){
+                clearErrors();
+                let isValid = true;
+
                 const name = document.getElementById('checkoutName').value.trim();
                 const address = document.getElementById('checkoutAddress').value.trim();
                 const email = document.getElementById('checkoutEmail').value.trim();
                 const phone = document.getElementById('checkoutPhone').value.trim();
                 const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-                if(!name || !address || !email || !phone){ alert('Please fill all fields'); return; }
+
+                if(!name || name.length < 2 || name.length > 100){
+                    showError('checkoutName', 'Full name must be between 2 and 100 characters');
+                    isValid = false;
+                } else {
+                    const namePattern = new RegExp('^[a-zA-Z\\s\'-]+$');
+                    if(!namePattern.test(name)){
+                        showError('checkoutName', 'Full name can only contain letters, spaces, hyphens, and apostrophes');
+                        isValid = false;
+                    }
+                }
+
+                if(!address || address.length < 10 || address.length > 200){
+                    showError('checkoutAddress', 'Address must be between 10 and 200 characters');
+                    isValid = false;
+                }
+
+                if(!email){
+                    showError('checkoutEmail', 'Email is required');
+                    isValid = false;
+                } else {
+                    const atSymbol = '@@';
+                    const hasAt = email.indexOf(atSymbol.substring(0, 1)) > 0;
+                    const atPos = email.indexOf(atSymbol.substring(0, 1));
+                    const hasDot = email.indexOf('.') > atPos;
+                    if(!hasAt || !hasDot || atPos === -1){
+                        showError('checkoutEmail', 'Please enter a valid email address');
+                        isValid = false;
+                    } else if(email.length > 100){
+                        showError('checkoutEmail', 'Email must not exceed 100 characters');
+                        isValid = false;
+                    }
+                }
+
+                if(!phone){
+                    showError('checkoutPhone', 'Phone number is required');
+                    isValid = false;
+                } else {
+                    const phonePattern = new RegExp('^(\\+84|0)[0-9]{9,10}$');
+                    if(!phonePattern.test(phone)){
+                        showError('checkoutPhone', 'Please enter a valid Vietnamese phone number (e.g., 0912345678 or +84912345678)');
+                        isValid = false;
+                    }
+                }
+
+                if(!paymentMethod){
+                    alert('Please select a payment method');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            confirmBtn.addEventListener('click', async function(){
+                if(!validateForm()) return;
+
+                const name = document.getElementById('checkoutName').value.trim();
+                const address = document.getElementById('checkoutAddress').value.trim();
+                const email = document.getElementById('checkoutEmail').value.trim();
+                const phone = document.getElementById('checkoutPhone').value.trim();
+                const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
 
                 try{
                     const form = new URLSearchParams();
-                    form.append('fullName', name);
-                    form.append('address', address);
-                    form.append('email', email);
-                    form.append('phone', phone);
-                    form.append('paymentMethod', paymentMethod);
+                    form.append('FullName', name);
+                    form.append('Address', address);
+                    form.append('Email', email);
+                    form.append('Phone', phone);
+                    form.append('PaymentMethod', paymentMethod);
 
                     const res = await fetch('/Cart/Checkout', { method: 'POST', headers: { 'Content-Type':'application/x-www-form-urlencoded' }, body: form.toString() });
                     if(!res.ok) throw new Error('Network error');
                     const j = await res.json();
                     if(j.needLogin){ alert('Please sign in to complete checkout'); window.location.href='/Account/Login'; return; }
+                    if(j.errors && j.errors.length > 0){
+                        clearErrors();
+                        j.errors.forEach(function(err){
+                            const fieldMap = {
+                                'FullName': 'checkoutName',
+                                'Address': 'checkoutAddress',
+                                'Email': 'checkoutEmail',
+                                'Phone': 'checkoutPhone'
+                            };
+                            const fieldId = fieldMap[err.Field] || err.Field.toLowerCase().replace(/([A-Z])/g, '$1').replace(/^./, str => str.toLowerCase());
+                            if(err.Errors && err.Errors.length > 0){
+                                showError(fieldId, err.Errors[0]);
+                            }
+                        });
+                        return;
+                    }
                     if(j.success){
-                        // show payment instructions if any
                         if(j.paymentInstructions){
                             itemsList.innerHTML = '<div class="mt-2 p-2" style="background:#fafafa;border:1px solid #eee;border-radius:8px">' + j.paymentInstructions + '</div>';
                         }
@@ -292,7 +396,6 @@
                         toast.style.cssText = 'position:fixed;right:20px;bottom:20px;background:#111;color:#fff;padding:10px 14px;border-radius:8px;z-index:99999;box-shadow:0 8px 20px rgba(0,0,0,0.2);';
                         document.body.appendChild(toast);
 
-                        // If transfer was chosen, poll payment status until confirmed
                         if(paymentMethod === 'transfer' && j.orderId){
                             const orderId = j.orderId;
                             const poll = setInterval(async () => {
@@ -302,14 +405,11 @@
                                         clearInterval(poll);
                                         toast.textContent = 'Payment confirmed';
                                         
-                                        // Wait 5 seconds before showing success notification
                                         setTimeout(async () => {
-                                            // Clear server-side cart for this session
                                             try {
                                                 await fetch('/Cart/ClearCart', { method: 'POST', credentials: 'same-origin' });
-                                            } catch(e) { /* ClearCart failed */ }
+                                            } catch(e) { }
 
-                                            // Update client UI: empty cart section and summary
                                             const mainContainer = document.querySelector('.container-fluid.px-4.my-4');
                                             if(mainContainer){
                                                 const leftCol = mainContainer.querySelector('.row .col-md-8');
@@ -318,20 +418,17 @@
                                                 if(rightCol) rightCol.innerHTML = '<div class="card"><div class="card-body"><h5 class="mb-3">Order Summary</h5><div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>$0</span></div><div class="d-flex justify-content-between mb-3"><span>Tax</span><span>$0</span></div><hr><div class="d-flex justify-content-between mb-3 fw-bold"><span>Total</span><span>$0</span></div><a href="' + '@Url.Action("Index","Products")' + '" class="btn btn-dark w-100">Continue Shopping</a></div></div>';
                                             }
 
-                                            // Update header cart badge
                                             const badge = document.getElementById('cartBadge');
                                             if(badge){ badge.textContent = '0'; badge.style.display = 'none'; }
 
-                                            // Show payment success modal with orderId
                                             try {
                                                 showPaymentSuccessModal(orderId);
-                                            } catch(e){ /* showPaymentSuccessModal failed */ }
+                                            } catch(e){ }
 
-                                            // remove toast after a short delay
                                             setTimeout(()=>{ toast.remove(); },1500);
                                         }, 5000);
                                     } }
-                                }catch(e){ /* Polling error */ }
+                                }catch(e){ }
                             }, 2000);
                         } else {
                             setTimeout(()=>{ toast.remove(); location.reload(); },1200);
@@ -342,7 +439,6 @@
                 }catch(e){ alert('Error placing order'); }
             });
 
-            // Payment success modal helpers
             const successModal = document.getElementById('paymentSuccessModal');
             if(successModal){
                 const successOverlay = successModal.querySelector('.overlay');
@@ -362,4 +458,3 @@
         })();
     </script>
 }
-

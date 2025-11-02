@@ -188,13 +188,13 @@ window.isAuthenticated = @isAuth;
                     return;
                 }
             }
-            // fallback: localStorage (for non-authenticated users)
+            // fallback: localStorage
             const cart = JSON.parse(localStorage.getItem('cart')||'[]');
             badge.textContent = cart.length || 0;
             badge.style.display = (cart.length > 0) ? 'inline' : 'none';
         }catch(e){ badge.textContent = 0; badge.style.display = 'none'; }
     }
-    // Update cart badge after page interactions (e.g., after adding to cart)
+    // Update cart badge after page interactions
     updateCartBadge();
 
     const modal = document.getElementById('orderModal');

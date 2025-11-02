@@ -79,4 +79,33 @@ namespace BTL_WEBDEV2025.Models
         [Range(typeof(bool), "true", "true", ErrorMessage = "You must agree to continue")]
         public bool AcceptPolicy { get; set; }
     }
+
+    public class CheckoutViewModel
+    {
+        [Required(ErrorMessage = "Full name is required")]
+        [StringLength(100, MinimumLength = 2, ErrorMessage = "Full name must be between 2 and 100 characters")]
+        [RegularExpression(@"^[a-zA-Z\s'-]+$", ErrorMessage = "Full name can only contain letters, spaces, hyphens, and apostrophes")]
+        [Display(Name = "Full name")]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Address is required")]
+        [StringLength(200, MinimumLength = 10, ErrorMessage = "Address must be between 10 and 200 characters")]
+        [Display(Name = "Delivery address")]
+        public string Address { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address format")]
+        [StringLength(100, ErrorMessage = "Email must not exceed 100 characters")]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Phone number is required")]
+        [RegularExpression(@"^(\+84|0)[0-9]{9,10}$", ErrorMessage = "Please enter a valid Vietnamese phone number")]
+        [Display(Name = "Phone number")]
+        public string Phone { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Payment method is required")]
+        [Display(Name = "Payment method")]
+        public string PaymentMethod { get; set; } = string.Empty;
+    }
 }

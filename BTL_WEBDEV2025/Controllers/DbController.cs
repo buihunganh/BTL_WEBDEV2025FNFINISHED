@@ -15,7 +15,6 @@ namespace BTL_WEBDEV2025.Controllers
             _db = db;
         }
 
-        // GET /db/ping
         [HttpGet("ping")]
         public async Task<IActionResult> Ping()
         {
@@ -27,16 +26,12 @@ namespace BTL_WEBDEV2025.Controllers
                 {
                     productCount = await _db.Products.CountAsync();
                 }
-                catch
-                {
-                    // ignored: table may not exist before migrations
-                }
+                catch { }
             }
 
             return Ok(new { canConnect, productCount });
         }
 
-        // POST /db/map-images
         [HttpPost("map-images")]
         public async Task<IActionResult> MapImages([FromServices] IWebHostEnvironment env)
         {
@@ -77,7 +72,6 @@ namespace BTL_WEBDEV2025.Controllers
                     var dirInfo = new DirectoryInfo(directoryName);
                     var brandName = dirInfo.Name.ToLower();
 
-                    // Tên file kiểu: adidas1, nike20...
                     var m = System.Text.RegularExpressions.Regex.Match(fileName, @"([a-zA-Z]+)(\d+)$");
                     if (!m.Success)
                     {
@@ -97,7 +91,6 @@ namespace BTL_WEBDEV2025.Controllers
                     var brand = await _db.Brands.FirstOrDefaultAsync(b => b.Name.ToLower() == brandPart);
                     if (brand == null)
                     {
-                        // auto create new Brand if missing
                         brand = new Brand { Name = brandPart };
                         _db.Brands.Add(brand);
                         await _db.SaveChangesAsync();
@@ -107,21 +100,19 @@ namespace BTL_WEBDEV2025.Controllers
                     var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == parsedId && p.BrandId == brand.Id);
                     if (product != null)
                     {
-                        // Cập nhật url cho sản phẩm gốc
                         product.ImageUrl = relPath;
                         updated++;
                         log.Add($"Updated Product Id={parsedId}, Brand={brandPart} to ImageUrl={relPath}");
                     }
                     else
                     {
-                        // Tạo sản phẩm mới nếu không tìm thấy
                         product = new Product {
                             Name = fileName,
                             Description = "Auto-created from image upload.",
                             Price = 0,
                             ImageUrl = relPath,
                             BrandId = brand.Id,
-                            Category = char.ToUpper(brandPart[0]) + brandPart.Substring(1), // fallback category/brand name
+                            Category = char.ToUpper(brandPart[0]) + brandPart.Substring(1),
                         };
                         _db.Products.Add(product);
                         updated++;
@@ -142,7 +133,6 @@ namespace BTL_WEBDEV2025.Controllers
             }
         }
 
-        // POST /db/selftest - verify we can INSERT/DELETE to Users table
         [HttpPost("selftest")]
         public async Task<IActionResult> SelfTest()
         {
@@ -155,7 +145,6 @@ namespace BTL_WEBDEV2025.Controllers
                     return Ok(new { canConnect, wrote = false, cleaned = false, message = "Cannot connect to database" });
                 }
 
-                // Ensure RoleId 2 exists
                 if (!await _db.Roles.AnyAsync(r => r.Id == 2))
                 {
                     _db.Roles.Add(new Role { Id = 2, Name = "Customer" });
@@ -181,5 +170,3 @@ namespace BTL_WEBDEV2025.Controllers
         }
     }
 }
-
-

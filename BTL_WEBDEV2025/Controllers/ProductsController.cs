@@ -18,17 +18,14 @@ namespace BTL_WEBDEV2025.Controllers
             _fallbackProducts = InitializeProducts();
         }
 
-        // GET: Products
         public IActionResult Index()
         {
             var all = TryGetProductsFromDb();
             return View(all);
         }
 
-        // GET: Products/Men
         public IActionResult Men()
         {
-            // Use TryGetProductsFromDb to be resilient if DB cannot connect
             var all = TryGetProductsFromDb();
 
             List<Product> products;
@@ -36,7 +33,6 @@ namespace BTL_WEBDEV2025.Controllers
 
             try
             {
-                // Prefer DB-backed query when available to get brand data and category mapping
                 if (_db.Database.CanConnect())
                 {
                     brands = _db.Brands.Select(b => b.Name).ToList();
@@ -48,12 +44,8 @@ namespace BTL_WEBDEV2025.Controllers
                     return View(products);
                 }
             }
-            catch
-            {
-                // ignore and fallback to in-memory list
-            }
+            catch { }
 
-            // Fallback: derive brands and products from the in-memory list
             brands = all.Select(p => p.Brand?.Name ?? "Others").Distinct().ToList();
             products = all.Where(p => string.Equals(p.Category, "Men", System.StringComparison.OrdinalIgnoreCase)
                                        || string.Equals(p.Category, "Unisex", System.StringComparison.OrdinalIgnoreCase))
@@ -63,7 +55,6 @@ namespace BTL_WEBDEV2025.Controllers
             return View(products);
         }
 
-        // GET: Products/Women
         public IActionResult Women()
         {
             var all = TryGetProductsFromDb();
@@ -83,10 +74,7 @@ namespace BTL_WEBDEV2025.Controllers
                     return View(products);
                 }
             }
-            catch
-            {
-                // ignore
-            }
+            catch { }
 
             brands = all.Select(p => p.Brand?.Name ?? "Others").Distinct().ToList();
             products = all.Where(p => string.Equals(p.Category, "Women", System.StringComparison.OrdinalIgnoreCase)
@@ -97,7 +85,6 @@ namespace BTL_WEBDEV2025.Controllers
             return View(products);
         }
 
-        // GET: Products/Kid
         public IActionResult Kid()
         {
             var all = TryGetProductsFromDb();
@@ -117,10 +104,7 @@ namespace BTL_WEBDEV2025.Controllers
                     return View(products);
                 }
             }
-            catch
-            {
-                // ignore
-            }
+            catch { }
 
             brands = all.Select(p => p.Brand?.Name ?? "Others").Distinct().ToList();
             products = all.Where(p => string.Equals(p.Category, "Kid", System.StringComparison.OrdinalIgnoreCase)
@@ -131,7 +115,6 @@ namespace BTL_WEBDEV2025.Controllers
             return View(products);
         }
 
-        // GET: Products/Search?q=query
         public IActionResult Search(string q)
         {
             if (string.IsNullOrWhiteSpace(q))
@@ -159,12 +142,8 @@ namespace BTL_WEBDEV2025.Controllers
                     return View(results);
                 }
             }
-            catch
-            {
-                // ignore and fallback
-            }
+            catch { }
 
-            // Fallback to in-memory search
             var all = TryGetProductsFromDb();
             var queryLower = q.Trim().ToLower();
             results = all.Where(p => 
@@ -206,10 +185,7 @@ namespace BTL_WEBDEV2025.Controllers
                     if (list.Count > 0) return list;
                 }
             }
-            catch
-            {
-                // ignore and fallback
-            }
+            catch { }
             return _fallbackProducts;
         }
     }

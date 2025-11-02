@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using BTL_WEBDEV2025.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
 using BTL_WEBDEV2025.Data;
 using Microsoft.AspNetCore.Hosting;
 
@@ -37,7 +36,6 @@ namespace BTL_WEBDEV2025.Controllers
             }
             ViewBag.Featured = featured;
             ViewBag.Deals = deals;
-            // Brand icons: pick multiple random images per brand for a richer loop
             var wanted = new[] { "Nike", "Adidas", "Balenciaga" };
             var rnd = new Random();
             var brandIcons = new List<(string Brand, string ImageUrl)>();
@@ -54,7 +52,6 @@ namespace BTL_WEBDEV2025.Controllers
                     candidates = GetMediaImagesForBrand(b);
                 }
 
-                // shuffle and take up to 4 per brand
                 var shuffled = candidates.OrderBy(_ => rnd.Next()).Take(Math.Min(4, candidates.Count)).ToList();
                 foreach (var url in shuffled)
                 {
@@ -134,12 +131,8 @@ namespace BTL_WEBDEV2025.Controllers
                     if (list.Count > 0) return list;
                 }
             }
-            catch
-            {
-                // ignore and fallback
-            }
+            catch { }
             return _fallbackProducts;
         }
     }
-
 }
