@@ -94,3 +94,18 @@
     }
 });
 
+
+window.addEventListener('load', function () {
+    var loader = document.getElementById('page-loader');
+    if (!loader) {
+        return;
+    }
+
+    loader.classList.add('page-loader--hidden');
+
+    window.setTimeout(function () {
+        if (loader && loader.parentNode) {
+            loader.parentNode.removeChild(loader);
+        }
+    }, 600);
+});

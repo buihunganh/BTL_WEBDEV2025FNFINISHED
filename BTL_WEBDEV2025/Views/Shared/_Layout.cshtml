@@ -13,6 +13,14 @@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
+    <div id="page-loader" class="page-loader" aria-hidden="true">
+        <div class="page-loader__inner">
+            <div class="page-loader__ring">
+                <span class="page-loader__segment"></span>
+            </div>
+            <p class="page-loader__text">ABDDT Store</p>
+        </div>
+    </div>
     <!-- Top Bar -->
     @await Html.PartialAsync("Partials/_TopBar")
     
