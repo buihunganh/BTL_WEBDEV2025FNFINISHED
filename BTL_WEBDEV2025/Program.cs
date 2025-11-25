@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using BTL_WEBDEV2025.Data;
+using BTL_WEBDEV2025.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,8 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
     options.IdleTimeout = TimeSpan.FromMinutes(20);
 });
+
+builder.Services.AddHttpClient<GoogleFlowClient>();
 
 builder.Services.AddResponseCompression(options =>
 {
