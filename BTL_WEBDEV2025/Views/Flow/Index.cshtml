@@ -1,0 +1,288 @@
+@{
+    ViewData["Title"] = "Veo 3 Google Flow";
+    var isConfigured = (bool?)(ViewBag.FlowConfigured ?? false) ?? false;
+    var modelName = ViewBag.FlowModel as string ?? "veo-3";
+}
+
+<section class="container py-4">
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                        <div>
+                            <h1 class="h3 mb-2">Tạo video Veo 3 với Google Flow</h1>
+                            <p class="text-muted mb-0">Dán tối đa 200 prompt, hệ thống sẽ gửi lần lượt để tạo video. Có thể tải xuống và chạy lại từng prompt.</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge @((isConfigured ? "bg-success" : "bg-secondary")) px-3 py-2">@((isConfigured ? "Flow API đã cấu hình" : "Flow API chưa cấu hình"))</span>
+                            <div class="small text-muted mt-1">Model: @modelName</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h2 class="h5 mb-1">Nhập prompt</h2>
+                    <p class="text-muted small mb-0">Mỗi dòng là một prompt. Giới hạn 200 prompt trong hàng chờ.</p>
+                </div>
+                <div class="card-body">
+                    <label class="form-label fw-semibold">Danh sách prompt</label>
+                    <textarea id="promptInput" class="form-control" rows="10" placeholder="Ví dụ:\n1. Chim hồng hạc bay trên đại dương lúc hoàng hôn\n2. Thành phố tương lai với xe bay" style="resize: vertical;"></textarea>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button class="btn btn-dark" id="queueButton"><i class="bi bi-plus-circle me-2"></i>Thêm vào hàng chờ</button>
+                        <button class="btn btn-outline-secondary" id="clearButton"><i class="bi bi-trash me-2"></i>Xóa hàng chờ</button>
+                    </div>
+                    <div class="alert alert-info d-flex align-items-center gap-2 mt-3 mb-0" role="alert">
+                        <i class="bi bi-info-circle"></i>
+                        <div>
+                            Nhấn "Thêm vào hàng chờ" để đưa prompt vào danh sách. Sau đó bấm "Chạy lần lượt" để gửi tới Google Flow.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pb-0">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <h2 class="h5 mb-1">Hàng chờ & tiến trình</h2>
+                            <p class="text-muted small mb-0">Hệ thống sẽ chạy lần lượt tối đa 200 prompt.</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-muted small">Trong hàng chờ: <span id="queueCount" class="fw-semibold">0</span>/200</div>
+                            <button class="btn btn-primary" id="runButton"><i class="bi bi-play-fill me-2"></i>Chạy lần lượt</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="progressSummary" class="mb-3 small text-muted">Chưa bắt đầu.</div>
+                    <div class="progress mb-3" role="progressbar" aria-label="Tiến độ chạy prompt">
+                        <div id="progressBar" class="progress-bar bg-success" style="width: 0%"></div>
+                    </div>
+                    <div id="queueList" class="mb-3" style="max-height: 160px; overflow-y: auto;"></div>
+                    <hr />
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h3 class="h6 mb-0">Kết quả</h3>
+                        <div class="text-muted small">Tải xuống hoặc chạy lại từng prompt.</div>
+                    </div>
+                    <div id="resultsList" class="d-flex flex-column gap-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        const promptInput = document.getElementById('promptInput');
+        const queueButton = document.getElementById('queueButton');
+        const clearButton = document.getElementById('clearButton');
+        const runButton = document.getElementById('runButton');
+        const queueList = document.getElementById('queueList');
+        const resultsList = document.getElementById('resultsList');
+        const progressSummary = document.getElementById('progressSummary');
+        const progressBar = document.getElementById('progressBar');
+        const queueCount = document.getElementById('queueCount');
+
+        const queue = [];
+        const results = [];
+        let isRunning = false;
+
+        function renderQueue() {
+            queueList.innerHTML = '';
+            queueCount.textContent = queue.length;
+            if (queue.length === 0) {
+                queueList.innerHTML = '<div class="text-muted small">Chưa có prompt trong hàng chờ.</div>';
+                return;
+            }
+            const fragment = document.createDocumentFragment();
+            queue.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'd-flex align-items-center justify-content-between bg-light rounded px-2 py-1 mb-1';
+                div.innerHTML = `<span class="small text-truncate" style="max-width: 90%;">${idx + 1}. ${escapeHtml(item)}</span>`;
+                fragment.appendChild(div);
+            });
+            queueList.appendChild(fragment);
+        }
+
+        function renderResults() {
+            resultsList.innerHTML = '';
+            if (results.length === 0) {
+                resultsList.innerHTML = '<div class="text-muted small">Chưa có kết quả.</div>';
+                return;
+            }
+
+            results.forEach((result, idx) => {
+                const card = document.createElement('div');
+                card.className = 'border rounded p-3 shadow-sm';
+                const statusClass = result.success ? 'text-success' : 'text-danger';
+                const badge = result.success ? '<span class="badge bg-success">Thành công</span>' : '<span class="badge bg-danger">Lỗi</span>';
+                const downloadButton = result.videoUrl
+                    ? `<a class="btn btn-sm btn-outline-primary" href="/Flow/Download?url=${encodeURIComponent(result.videoUrl)}&prompt=${encodeURIComponent(result.prompt)}"><i class="bi bi-download me-1"></i>Tải xuống</a>`
+                    : '';
+
+                const rerunButton = `<button class="btn btn-sm btn-outline-secondary" data-rerun="${idx}"><i class="bi bi-arrow-repeat me-1"></i>Chạy lại</button>`;
+
+                card.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                ${badge}
+                                <span class="small ${statusClass}">${result.statusLabel}</span>
+                            </div>
+                            <div class="fw-semibold mt-1">Prompt:</div>
+                            <div class="text-break">${escapeHtml(result.prompt)}</div>
+                            <div class="small text-muted mt-2">Bắt đầu: ${result.started ?? '-'} • Kết thúc: ${result.completed ?? '-'}</div>
+                            ${result.error ? `<div class="text-danger small mt-2">${escapeHtml(result.error)}</div>` : ''}
+                            ${result.videoUrl ? `<div class="mt-2 small">Video: <a href="${result.videoUrl}" target="_blank" rel="noopener">${result.videoUrl}</a></div>` : ''}
+                        </div>
+                        <div class="d-flex flex-column gap-2 align-items-end">
+                            ${downloadButton}
+                            ${rerunButton}
+                        </div>
+                    </div>`;
+
+                resultsList.appendChild(card);
+            });
+
+            resultsList.querySelectorAll('[data-rerun]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const index = parseInt(btn.getAttribute('data-rerun'), 10);
+                    const item = results[index];
+                    if (item) {
+                        addToQueue([item.prompt], true);
+                        processQueue();
+                    }
+                });
+            });
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function addToQueue(prompts, silent) {
+            const cleaned = prompts
+                .map(p => p.trim())
+                .filter(p => p.length > 0);
+
+            if (cleaned.length === 0) {
+                if (!silent) alert('Không có prompt hợp lệ.');
+                return;
+            }
+
+            const availableSlots = 200 - queue.length;
+            if (availableSlots <= 0) {
+                alert('Hàng chờ đã đạt giới hạn 200 prompt.');
+                return;
+            }
+
+            const toAdd = cleaned.slice(0, availableSlots);
+            queue.push(...toAdd);
+            renderQueue();
+            if (!silent && cleaned.length > toAdd.length) {
+                alert('Một số prompt đã không được thêm vì vượt quá giới hạn 200.');
+            }
+        }
+
+        async function processQueue() {
+            if (isRunning || queue.length === 0) return;
+            isRunning = true;
+            const total = queue.length;
+            let completed = 0;
+            progressSummary.textContent = `Đang chạy ${total} prompt...`;
+
+            while (queue.length > 0) {
+                const current = queue.shift();
+                renderQueue();
+                if (!current) continue;
+
+                progressSummary.textContent = `Đang chạy: ${current}`;
+                const result = await runPrompt(current);
+                completed += 1;
+                updateProgress(completed, total);
+                results.unshift(result);
+                renderResults();
+            }
+
+            isRunning = false;
+            progressSummary.textContent = 'Đã hoàn thành tất cả prompt trong hàng chờ.';
+        }
+
+        function updateProgress(done, total) {
+            const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+            progressBar.style.width = `${percent}%`;
+            progressBar.setAttribute('aria-valuenow', percent.toString());
+            progressSummary.textContent = `Hoàn thành ${done}/${total} prompt (${percent}%).`;
+        }
+
+        async function runPrompt(prompt) {
+            const requestBody = { prompt };
+            try {
+                const response = await fetch('/Flow/RunPrompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    const message = await response.text();
+                    return buildResult(prompt, false, null, message || 'Yêu cầu không thành công.');
+                }
+
+                const data = await response.json();
+                return buildResult(prompt, !data.error, data.videoUrl, data.error, data.status, data.startedAt, data.completedAt);
+            } catch (error) {
+                return buildResult(prompt, false, null, 'Không thể gửi yêu cầu tới máy chủ.');
+            }
+        }
+
+        function buildResult(prompt, success, videoUrl, error, status, startedAt, completedAt) {
+            return {
+                prompt,
+                videoUrl: videoUrl || null,
+                error: error || null,
+                statusLabel: status || (success ? 'Thành công' : 'Thất bại'),
+                success,
+                started: startedAt ? formatDate(startedAt) : new Date().toLocaleString(),
+                completed: completedAt ? formatDate(completedAt) : new Date().toLocaleString()
+            };
+        }
+
+        function formatDate(value) {
+            const date = new Date(value);
+            return date.toLocaleString();
+        }
+
+        queueButton.addEventListener('click', () => {
+            const prompts = promptInput.value.split(/\n+/);
+            addToQueue(prompts);
+            promptInput.value = '';
+        });
+
+        clearButton.addEventListener('click', () => {
+            queue.length = 0;
+            renderQueue();
+            updateProgress(0, 0);
+            progressSummary.textContent = 'Đã xóa hàng chờ.';
+        });
+
+        runButton.addEventListener('click', () => {
+            if (queue.length === 0) {
+                alert('Hãy thêm ít nhất một prompt trước khi chạy.');
+                return;
+            }
+            processQueue();
+        });
+
+        renderQueue();
+        renderResults();
+    </script>
+}
